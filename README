@@ -5,3 +5,8 @@ developed between January and April 2008 by Simon Willison and Natalie Downe.
 It probably won't work straight out of the repository yet. The Django version
 it runs against is VERSION = (0, 97, 'pre'), so there's certainly some minor
 work that needs to be done to bring it up to speed with Django 1.1.
+
+This code was not originally intended for public consumption, so there are
+probably one or two eyebrow raising design decisions. In particular, the
+machine tags stuff for user profiles was an ambitious experiment which I
+wouldn't mind seeing the back of.
