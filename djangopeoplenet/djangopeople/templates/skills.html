@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Skills |{% endblock %}
+
+{% block js %}
+{% endblock %}
+
+{% block header %}{% load thumbnail %}
+        <h1>Skills</h1>
+        {% if country %}
+        <p class="meta"><img src="/static/img/flags/{{ country.iso_code|lower }}.gif" title="{{ country }}" class="flag"></a> {{ country }}</p>
+        {% endif %}
+{% endblock %}
+
+{% block map %}
+{% endblock %}
+
+{% block content %}
+        <ul class="tagcloud">
+            {% for tag in tags %}
+            <li class="t{{ tag.font_size }}"><a href="{% if country %}/{{ country.iso_code|lower }}{% endif %}/skills/{{ tag|urlencode }}/" title="{{ tag.count }} {% ifequal tag.count 1 %}person{% else %}people{% endifequal %}">{{ tag }}</a></li>
+            {% endfor %}
+        </ul>
+{% endblock %}
+

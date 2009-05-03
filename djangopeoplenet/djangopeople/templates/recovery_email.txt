@@ -1,0 +1,11 @@
+Hello {{ person.user.first_name }},
+
+Someone requested an account recovery link over on djangopeople.net. If it was
+you, click the following link to sign straight in to the site; you can then 
+reset your password.
+
+http://djangopeople.net{{ path }}
+
+Best regards,
+
+Django People

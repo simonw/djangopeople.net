@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title%}{{ person }} |{% endblock %}
+
+{% block nav_li_class_profile %}{% if is_owner %} class="current"{% endif %}{% endblock %}
+
+{% block js %}{% load thumbnail %}
+{% if person.openid_server %}<link rel="openid.server" href="{{ person.openid_server }}">{% endif %}
+{% if person.openid_delegate %}<link rel="openid.delegate" href="{{ person.openid_delegate }}">{% endif %}
+{% if privacy.hide_from_search %}<meta name="ROBOTS" content="NOINDEX, FOLLOW">{% endif %}
+<script src="http://www.google.com/jsapi?key={{ api_key }}" type="text/javascript">
+</script>
+{% if person.latitude and person.longitude %}
+<script type="text/javascript">
+google.load('maps', '2');
+
+var nearby_people = [
+    // latitude, longitude, name, username, location description, flag, isocode
+    {% for p in person.get_nearest %}
+    [{{ p.latitude }}, {{ p.longitude }}, "{{ p|escapejs }}", "{{ p.user.username|escapejs }}", "{{ p.location_description|escapejs }}", "{% if p.photo %}{% thumbnail p.photo 40x40 crop %}{% else %}/static/img/person_small_blank.png{% endif %}", "{{ p.country.iso_code|lower }}"]{% if not forloop.last %},{% endif %}
+    {% endfor %}
+];
+
+var person_latitude = {{ person.latitude }};
+var person_longitude = {{ person.longitude }};
+</script>
+<script type="text/javascript" src="/static/js/profile.js"></script>
+<style type="text/css">
+#id_skills {
+    width: 80%;
+}
+a.changeloc, h2 a.edit, div.bio a.edit {
+    font-size: 0.5em;
+    text-decoration: none;
+    vertical-align: middle;
+}
+div.bio a.edit {
+    font-size: 0.8em;
+}
+</style>
+{% endif %}
+
+{% endblock %}
+
+{% block bodymeta %} class="vcard hresume"{% endblock %}
+
+{% block header %}
+        {% if person.photo %}<img src="{% thumbnail person.photo 83x83 crop %}" alt="{{ person }}" class="main photo">{% endif %}
+        
+        <h1 class="fn n">
+			<span class="given-name">{{ person.user.first_name }}</span> 
+			<span class="family-name">{{ person.user.last_name }}</span>
+			{% if is_owner %}
+				<a href="/{{ person.user.username }}/upload/" class="meta" id="uploadNewPhoto">(upload new photo)</a>{% endif %}
+		</h1>
+        <p class="meta adr">
+			<a href="/{{ person.country.iso_code|lower }}/" class="nobg">
+				<img src="/static/img/flags/{{ person.country.iso_code|lower }}.gif" alt="{{ person.country }}" title="{{ person.country }}" class="flag country-name">
+			</a> <span class="region">{{ person.location_description_html }}</span>{% if is_owner %} <a href="/{{ person.user.username }}/location/" class="changeloc">(change)</a>{% endif %}</p>
+{% endblock %}
+
+{% block map %}
+    <div class="mapContainer minor">
+        <div id="gmap">&nbsp;</div>
+    </div>
+{% endblock %}
+
+    {% block content %}
+        <div class="primary">
+           {% if is_owner or person.bio or person.skilltags or mtags.profile.looking_for_work %}
+            <div class="highlight">                
+                {% if person.bio %}<div class="summary">{% filter linebreaks %}{{ person.bio|urlize }}{% if is_owner %} <a class="edit" href="/{{ user.username }}/bio/">(edit bio)</a>{% endif %}{% endfilter %}</div>{% else %}{% if is_owner %}<p><a href="/{{ user.username }}/bio/">Create your bio</a></p>{% endif %}{% endif %}
+                
+                <ul class="tags">{% for tag in person.skilltags %}
+                    <li><a rel="tag" class="skill" href="/skills/{{ tag|urlencode }}/">{{ tag }}</a></li>
+                {% endfor %}
+                {% if is_owner %}
+                    <li class="edit"><a href="/{{ user.username }}/skills/">(edit skills)</a></li>
+                {% endif %}
+                </ul>
+                {% if is_owner %}
+                <form action="/{{ person.user.username }}/skills/" method="POST" id="editSkills">
+                <p>{{ skills_form.skills }} <input type="submit" value="Save"></p>
+                </form>
+                {% endif %}
+                {% if mtags.profile.looking_for_work %}<p class="prominent">Looking for <strong>{{ mtags.profile.looking_for_work }}</strong> work</p>{% endif %}
+            </div>
+            {% endif %}
+        {% if show_finding %}
+            <div class="finding">
+            <h2>Finding {{ person.user.first_name }}{% if is_owner %} <a class="edit" href="/{{ user.username }}/finding/">(edit)</a>{% endif %}</h2>
+            {% if privacy.show_email %}
+                <p><strong>email:</strong> <a href="mailto:{{ person.user.email }}" class="mail email">{{ person.user.email }}</a></p>
+            {% endif %}
+            {% if mtags.profile.blog %}
+            <p><strong>blog:</strong> <a href="{{ mtags.profile.blog }}" class="ext url" rel="me nofollow">{{ mtags.profile.blog }}</a></p>
+            {% endif %}
+            {% if privacy.show_im %}
+                {% for im in ims %}
+                <p><strong>{{ im.name }}:</strong> <span class="{{ im.shortname }}">{{ im.value }}</span> {% ifequal im.shortname "django" %}{% if privacy.show_last_irc_activity %} (active {{ person.last_active_on_irc|timesince }} ago){% endif %}{% endifequal %}</p>
+                {% endfor %}
+            {% endif %}
+            {% if services %}
+            <ul class="services">
+                {% for service in services %}
+                <li><a rel="me nofollow" href="{{ service.value }}" class="{{ service.shortname }}">{{ service.name }}</a></li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            </div>
+        {% endif %}
+        {% if person.portfoliosite_set.count %}
+            <h2>{{ person.user.first_name }}'s Django portfolio{% if is_owner %} <a class="edit" href="/{{ user.username }}/portfolio/">(edit)</a>{% endif %}</h2>
+            <p class="help">Django projects {{ person.user.first_name }} has contributed to</p>
+            <ul class="siteList">
+                {% for site in person.portfoliosite_set.all %}
+                <li><a href="{{ site.url }}" class="url" rel="nofollow"><cite>{{ site.title }}</cite></a></li>
+                {% endfor %}
+            </ul>
+        {% else %}{% if is_owner %}<p><a href="/{{ user.username }}/portfolio/">Add some sites</a> to your portfolio</p>{% endif %}
+        {% endif %}
+        
+        </div>
+        <div class="secondary">
+            {% with person.get_nearest as people %}
+            {% if people %}
+            <h2>People near {{ person.user.first_name }}</h2>
+            
+            <ul class="detailsList">
+                {% for person in people %}
+                <li>
+                    <img src="{% if person.photo %}{% thumbnail person.photo 40x40 crop %}{% else %}/static/img/person_small_blank.png{% endif %}" alt="{{ person }}" class="main">
+                    <h3><a href="{{ person.get_absolute_url }}">{{ person }}</a></h3>
+                    <p class="meta"><a href="/{{ person.country.iso_code|lower }}/" class="nobg"><img src="/static/img/flags/{{ person.country.iso_code|lower }}.gif" alt="{{ person.country }}" title="{{ person.country }}"></a>  {{ person.location_description }}<br>{{ person.distance_in_miles|floatformat:0 }} mile{{ person.distance_in_miles|floatformat:0|pluralize }} away</p>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% endwith %}
+        </div>
+    {% endblock %}

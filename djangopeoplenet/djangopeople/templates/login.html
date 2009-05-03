@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Log in |{% endblock %}
+
+{% block nav_li_class_login %} class="current"{% endblock %}>
+
+{% block js %}
+<script type="text/javascript" src="/static/js/jquery.color.js"></script>
+<script type="text/javascript">
+jQuery(function($) {
+    $('p.invalid').css({
+        'backgroundColor': 'red',
+        'color': 'white'
+    });
+    setTimeout(function() {
+        $('p.invalid').animate({
+            'backgroundColor': 'pink',
+            'color': 'black'
+        }, 1500);
+    }, 2000);
+    {% if is_invalid %}
+    $('input#id_password').focus();
+    {% else %}
+    $('input#id_username').focus();
+    {% endif %}
+});
+</script>
+<style type="text/css">
+p.invalid {
+    padding: 0.5em 0.3em 0.3em 0.5em;
+    margin: 1em 0;
+}
+input.openid {
+  background: url(/static/img/openid-14x14.png) no-repeat; 
+  background-position: 0 50%;
+  padding-left: 16px;
+}
+</style>
+{% endblock %}
+
+{% block header%}
+<h1>Log in</h1>
+{% endblock %}
+
+{% block content %}
+    <form method="post" action="/login/">
+    {% if is_invalid %}
+        <p class="invalid">Your login attempt failed.</p>
+    {% endif %}
+    <fieldset>
+        <div class="fieldWrapper">
+            <label for="id_username">Username</label>
+            <input type="text" name="username" id="id_username" value="{{ username }}">
+        </div>
+        <div class="fieldWrapper">
+            <label for="id_password">Password</label>
+            <input type="password" name="password" id="id_password">
+        </div>
+        <p><a href="/recover/">Lost your password?</a></p>
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    </fieldset>
+    <div class="buttonContainer">
+        <input type="submit" value="Log in">
+    </div>
+    </form>
+
+<h2>Or sign in with your OpenID</h2>
+
+    <form method="post" action="/openid/">
+    <fieldset>
+        <div class="fieldWrapper">
+            <label for="id_openid">OpenID</label>
+            <input id="id_openid" class="openid" type="text" name="openid_url">
+        </div>
+        <p><a href="/recover/">OpenID not working?</a></p>
+    </fieldset>
+    <div class="buttonContainer">
+        <input type="submit" value="Log in with OpenID">
+    </div>
+    </form>
+
+{% endblock %}

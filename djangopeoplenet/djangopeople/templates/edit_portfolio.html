@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Update your portfolio |{% endblock %}
+
+{% block js %}
+<style type="text/css">
+.fieldWrapper label {
+    width: 5em;
+}
+.fieldWrapper input {
+    width: 20em;
+}
+</style>
+{% endblock %}
+
+{% block header%}
+<h1>Update your portfolio</h1>
+{% endblock %}
+
+{% block content %}
+    <p class="help">Show off the sites and projects you've personally built (or contributed to) using Django.</p>
+    <form method="post" action="/{{ user.username }}/portfolio/">
+    {% for bit in form.portfolio_fields %}
+    <fieldset>
+        <div class="fieldWrapper">
+            {{ bit.title_field.errors }}
+            <label for="{{ bit.title_id }}">{{ bit.title_field.label }}:</label>
+            {{ bit.title_field }}
+        </div>
+        <div class="fieldWrapper">
+            {{ bit.url_field.errors }}
+            <label for="{{ bit.url_id }}">{{ bit.url_field.label }}:</label>
+            {{ bit.url_field }}
+        </div>
+    </fieldset>
+    {% endfor %}
+    <div class="buttonContainer"><input type="submit" value="Update portfolio"></div>
+    </form>
+{% endblock %}

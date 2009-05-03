@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Search{% if q %}: {{ q }}{% endif %} |{% endblock %}
+
+{% block nav_li_class_search %} class="current"{% endblock %}
+
+{% block js %}{% load thumbnail %}
+{% if results %}
+<script src="http://www.google.com/jsapi?key={{ api_key }}" type="text/javascript">
+</script>
+<script type="text/javascript">
+google.load('maps', '2');
+
+var people = [
+    // latitude, longitude, name, username, location description
+    {% for person in results %}
+    [{{ person.latitude }}, {{ person.longitude }}, "{{ person|escapejs }}", "{{ person.user.username|escapejs }}", "{{ person.location_description|escapejs }}", "{% if person.photo %}{% thumbnail person.photo 40x40 crop %}{% else %}/static/img/person_small_blank.png{% endif %}", "{{ person.country.iso_code|lower }}"]{% if not forloop.last %},{% endif %}
+    {% endfor %}
+];
+
+window.onload = function() {
+    window.gmap = new google.maps.Map2(document.getElementById('gmap'));
+    gmap.addControl(new google.maps.SmallMapControl());
+    gmap.addControl(new google.maps.MapTypeControl());
+    // We have to render the map first or the bounds calculations will fail
+    gmap.setCenter(new google.maps.LatLng(0, 0));
+    var bounds = new google.maps.LatLngBounds();
+    
+    // Plot the people as markers
+    $.each(people, function() {
+        var lat = this[0];
+        var lon = this[1];
+        var name = this[2];
+        var username = this[3];
+        var location_description = this[4];
+        var photo = this[5];
+        var iso_code = this[6];
+        var point = new google.maps.LatLng(lat, lon);
+        var marker = new google.maps.Marker(point, getMarkerOpts());
+        bounds.extend(point);
+        gmap.addOverlay(marker);
+        // Hook up the marker click event
+        google.maps.Event.addListener(marker, 'click', function() {
+            marker.openInfoWindow(makeWindow(
+                name, username, location_description, photo, iso_code, 
+                lat, lon
+            ));
+        });
+    });
+    gmap.setZoom(Math.min(gmap.getBoundsZoomLevel(bounds) - 1, 8));
+    gmap.setCenter(bounds.getCenter());
+};
+</script>
+{% endif %}
+{% endblock %}
+
+{% block header %}{% load thumbnail %}
+	<form action="/search/" method="GET" class="search">
+        <h1><label for="q">Search{% if q %}: {{ q }}{% endif %}</label></h1>
+        {% if results %}<p class="meta">{{ results|length }} result{{ results|length|pluralize }}</p>{% endif %}
+        {% if has_badwords %}<p class="help"><strong>Terms must be three or more characters</strong></p>{% endif %}
+		<p><input type="text" name="q" id="q" value="{{ q }}"> <input type="submit" class="submit" value="Search"></p>
+		
+</form>
+{% endblock %}
+
+{% block map %}
+{% if results %}
+    <div class="mapContainer major">
+        <div id="gmap">&nbsp;</div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if q and not results %}
+<p>No users found. This tool searches by username, first name and last name.</p>
+{% endif %}
+{% if results %}
+        <ul class="detailsList split">
+            {% load person_list_items %}{% person_list_items results %}
+        </ul>
+{% endif %}
+{% endblock %}
+
