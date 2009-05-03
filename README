@@ -1,0 +1,7 @@
+This is an unmodified (except removal of secrets and API keys) dump of the
+code now running on djangopeople.net - the vast majority of which was
+developed between January and April 2008 by Simon Willison and Natalie Downe.
+
+It probably won't work straight out of the repository yet. The Django version
+it runs against is VERSION = (0, 97, 'pre'), so there's certainly some minor
+work that needs to be done to bring it up to speed with Django 1.1.
