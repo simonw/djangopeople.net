@@ -1,9 +1,10 @@
 #!/usr/bin/env python
-import sys
+
+import sys, os
+root = os.path.dirname(__file__)
 paths = (
-    '/home/simon/sites/djangopeople.net',
-    '/home/simon/sites/djangopeople.net/djangopeoplenet',
-    '/home/simon/sites/djangopeople.net/djangopeoplenet/djangopeople/lib',
+    os.path.join(root),
+    os.path.join(root, "djangopeople", "lib"),
 )
 for path in paths:
     if not path in sys.path:
