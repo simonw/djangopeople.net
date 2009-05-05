@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}{{ tag }} |{% endblock %}
+
+{% block js %}{% load thumbnail %}
+<script src="http://www.google.com/jsapi?key={{ api_key }}" type="text/javascript">
+</script>
+<script type="text/javascript">
+google.load('maps', '2');
+
+var people = [
+    // latitude, longitude, name, username, location description
+    {% for person in object_list %}
+    [{{ person.latitude }}, {{ person.longitude }}, "{{ person|escapejs }}", "{{ person.user.username|escapejs }}", "{{ person.location_description|escapejs }}", "{% if person.photo %}{% thumbnail person.photo 40x40 crop %}{% else %}/static/img/person_small_blank.png{% endif %}", "{{ person.country.iso_code|lower }}"]{% if not forloop.last %},{% endif %}
+    {% endfor %}
+];
+
+window.onload = function() {
+    window.gmap = new google.maps.Map2(document.getElementById('gmap'));
+    gmap.addControl(new google.maps.SmallMapControl());
+    gmap.addControl(new google.maps.MapTypeControl());
+    // We have to render the map first or the bounds calculations will fail
+    gmap.setCenter(new google.maps.LatLng(0, 0));
+    var bounds = new google.maps.LatLngBounds();
+    
+    // Plot the people as markers
+    $.each(people, function() {
+        var lat = this[0];
+        var lon = this[1];
+        var name = this[2];
+        var username = this[3];
+        var location_description = this[4];
+        var photo = this[5];
+        var iso_code = this[6];
+        var point = new google.maps.LatLng(lat, lon);
+        var marker = new google.maps.Marker(point, getMarkerOpts());
+        bounds.extend(point);
+        gmap.addOverlay(marker);
+        // Hook up the marker click event
+        google.maps.Event.addListener(marker, 'click', function() {
+            marker.openInfoWindow(makeWindow(
+                name, username, location_description, photo, iso_code, 
+                lat, lon
+            ));
+        });
+    });
+    gmap.setZoom(Math.min(gmap.getBoundsZoomLevel(bounds) - 1, 8));
+    gmap.setCenter(bounds.getCenter());
+};
+</script>
+{% endblock %}
+
+{% block header %}{% load thumbnail %}
+        <h1>{{ tag }}</h1>
+        <p class="meta">{% if country %}<a href="/{{ country.iso_code|lower }}/" class="nobg"><img src="/static/img/flags/{{ country.iso_code|lower }}.gif" alt="{{ country }}" title="{{ country }}" class="flag"></a> {% endif %}{{ object_list|length }} Django {% ifequal object_list.count 1 %}Person{% else %}People{% endifequal %} mention this skill</p>
+{% endblock %}
+
+{% block map %}
+    <div class="mapContainer major">
+        <div id="gmap">&nbsp;</div>
+    </div>
+{% endblock %}
+
+{% block content %}
+        <ul class="detailsList split">
+            {% load person_list_items %}{% person_list_items object_list %}
+        </ul>
+{% endblock %}
+

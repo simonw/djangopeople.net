@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}People in {{ country }} looking for {{ looking_for }} |{% endblock %}e
+
+{% block js %}{% load thumbnail %}
+{% endblock %}
+
+{% block header %}{% load thumbnail %}
+<h1>{{ country }}, seeking {{ looking_for }} work</h1>
+{% endblock %}
+
+{% block map %}
+{% endblock %}
+
+{% block content %}
+        <ul class="detailsList split">
+            {% load person_list_items %}{% person_list_items people %}
+        </ul>
+{% endblock %}
+

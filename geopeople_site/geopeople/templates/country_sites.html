@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Sites in {{ country }} |{% endblock %}
+
+{% block js %}
+{% endblock %}
+
+{% block header %}{% load thumbnail %}
+        <h1>Sites in {{ country }}</h1>
+        <p class="meta"><img src="/static/img/flags/{{ country.iso_code|lower }}.gif" title="{{ country }}" class="flag"></a> {{ country }}</p>
+{% endblock %}
+
+{% block map %}
+{% endblock %}
+
+{% block content %}
+<ul class="countrysites">
+{% for site in sites %}
+  <li><a href="{{ site.url }}">{{ site.title }}</a> by <a href="{{ site.contributor.get_absolute_url }}">{{ site.contributor }}</a></li>
+{% endfor %}
+</ul>
+{% endblock %}
+

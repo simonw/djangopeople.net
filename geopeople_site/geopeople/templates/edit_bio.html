@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Edit your bio |{% endblock %}
+
+{% block js %}
+{% endblock %}
+
+{% block header%}
+<h1>Edit your bio</h1>
+{% endblock %}
+
+{% block content %}
+    <form method="post" action="/{{ user.username }}/bio/">
+    <p class="help">No HTML allowed, but paragraph tags will be added automatically and URLs will be turned in to links.</p>
+    <fieldset>
+        <div class="fieldWrapper">
+            {{ form.bio.errors }}
+            <label for="id_bio">Bio</label>
+            {{ form.bio }}
+        </div>
+    </fieldset>
+    <div class="buttonContainer"><input type="submit" value="Update bio"></div>
+    </form>
+
+{% endblock %}

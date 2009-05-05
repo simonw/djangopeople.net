@@ -1,0 +1,7 @@
+{% for person in people %}{% load thumbnail %}
+<li class="vcard">
+    <img src="{% if person.photo %}{% thumbnail person.photo 40x40 crop %}{% else %}/static/img/person_small_blank.png{% endif %}" alt="{{ person }}" class="main photo">
+    <h3><a href="{{ person.get_absolute_url }}" class="url fn n"><span class="given-name">{{ person.user.first_name }}</span> <span class="family-name">{{ person.user.last_name }}</span></a></h3>
+    <p class="meta adr"><a href="/{{ person.country.iso_code|lower }}/" class="nobg"><img src="/static/img/flags/{{ person.country.iso_code|lower }}.gif" alt="{{ person.country }}" class="country-name" title="{{ person.country }}"></a> <span class="region">{{ person.location_description }}</span></p>
+</li>
+{% endfor %}

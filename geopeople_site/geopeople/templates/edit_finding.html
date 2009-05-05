@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Edit contact information |{% endblock %}
+
+{% block js %}
+{% endblock %}
+
+{% block header%}
+<h1>Edit contact information</h1>
+{% endblock %}
+
+{% block content %}
+    <form method="post" action="/{{ person.user.username }}/finding/">
+    <h2>Contact details</h2>
+    <fieldset>
+        <div class="fieldWrapper">
+            {{ form.email.errors }}
+            <label for="id_email">E-mail *</label>
+            {{ form.email }}
+        </div>
+        <div class="fieldWrapper">
+            {{ form.blog.errors }}
+            <label for="id_blog">Blog URL</label>
+            {{ form.blog }}
+        </div>
+        <div class="fieldWrapper">
+            {{ form.looking_for_work.errors }}
+            <label for="id_looking_for_work">Looking for work?</label>
+            {{ form.looking_for_work }}
+        </div>
+    </fieldset>
+    <h2>Other profiles</h2>
+    <fieldset>
+        <p class="help">Got profiles on other sites? Enter the URLs below:</p>
+        {% for service in form.service_fields %}
+        <div class="fieldWrapper">
+            {{ service.field.errors|safe }}
+            <label for="id_service_{{ service.shortname }}">{{ service.label }}</label>
+            {{ service.field }}
+        </div>
+        {% endfor %}
+    </fieldset>
+    <h2>Instant messaging</h2>
+    <fieldset>
+        <p class="help">Use any instant messaging software?</p>
+        {% for provider in form.improvider_fields %}
+        <div class="fieldWrapper">
+            {{ provider.field.errors|safe }}
+            <label for="id_im_{{ provider.shortname }}">{{ provider.label }}</label>
+            {{ provider.field }}
+        </div>
+        {% endfor %}
+    </fieldset>
+
+    <h2 id="privacy">Privacy settings</h2>
+    <fieldset>
+        <p class="help">You can set your profile page not to show up in external search engine results (such as Google or Yahoo!)</p>
+        <div class="fieldWrapper radioSelect">
+            {{ form.privacy_search.errors }}
+            <label for="id_privacy_search">Search visibility</label>
+            {{ form.privacy_search }}
+        </div>
+        <div class="fieldWrapper radioSelect">
+            {{ form.privacy_email.errors }}
+            <label for="id_privacy_email">E-mail privacy</label>
+            {{ form.privacy_email }}
+        </div>
+        <div class="fieldWrapper radioSelect">
+            {{ form.privacy_im.errors }}
+            <label for="id_privacy_im">IM privacy</label>
+            {{ form.privacy_im }}
+        </div>
+        <div class="fieldWrapper radioSelect">
+            {{ form.privacy_irctrack.errors }}
+            <label for="id_privacy_irctrack">IRC tracking</label>
+            {{ form.privacy_irctrack }}
+        </div>
+    </fieldset>
+    
+    <div class="buttonContainer"><input type="submit" value="Save changes"></div>
+    </form>
+
+{% endblock %}
