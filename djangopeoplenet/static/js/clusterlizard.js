@@ -34,6 +34,7 @@ window.ClusterLizard = {
 		}
 		var marker = new ClusterLizard.ClusterMarker(latlng, icon, number);
 		map.addOverlay(marker);
+		return marker;
 	},
 	
 	ClusterMarker: function (latlng, icon, number) {
@@ -71,7 +72,6 @@ ClusterLizard.ClusterMarker.prototype.initialize = function (map) {
 	div.appendChild(label);
 	div.style.width = this.icon.iconSize.width + "px";
 	div.style.height = this.icon.iconSize.height + "px";
-	img.onclick = function () { map.setCenter(this.latlng, map.getZoom()+1); }
 	// Add to the map pane
 	map.getPane(G_MAP_MARKER_PANE).appendChild(div);
 	this.div = div;
@@ -104,6 +104,14 @@ ClusterLizard.ClusterMarker.prototype.redraw = function(force) {
   this.div.style.top = coords.y - (this.icon.iconSize.height/2) + "px";
   this.div.style.left = coords.x - (this.icon.iconSize.width/2) + "px";
   
+}
+
+// Binds the click action on the marker to going somewhere.
+ClusterLizard.ClusterMarker.prototype.bindClick = function(url) {
+	this.div.style.cursor = "pointer";
+	this.div.onclick = function () {
+		window.location.href = url;
+	}
 }
 
 	

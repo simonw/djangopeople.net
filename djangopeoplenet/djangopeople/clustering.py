@@ -65,9 +65,11 @@ def as_json(request, x1, y1, x2, y2, z):
     if y1 > y2:
         y1, y2 = y2, y1
     points = []
-    print "%s < x < %s   %s < y < %s" % (x1, x2, y1, y2)
     for cluster in ClusteredPoint.objects.filter(latitude__gt=y1, latitude__lt=y2, longitude__gt=x1, longitude__lt=x2, zoom=z):
-        points.append((cluster.longitude, cluster.latitude, cluster.number))
+        if cluster.djangoperson:
+            points.append((cluster.longitude, cluster.latitude, cluster.number, cluster.djangoperson.get_absolute_url()))
+        else:
+            points.append((cluster.longitude, cluster.latitude, cluster.number, None))
     return HttpResponse(simplejson.dumps(points))
     
 

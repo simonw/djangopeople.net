@@ -69,7 +69,10 @@ function loadClusters(zoom) {
         for (var i in points) {
             var point = points[i];
             var latlng = new GLatLng(point[1], point[0]);
-            ClusterLizard.addCluster(gmap, latlng, point[2]);
+            var marker = ClusterLizard.addCluster(gmap, latlng, point[2]);
+            if (point[3]) {
+                marker.bindClick(point[3]);
+            }
         }
         loading = false;
     });
