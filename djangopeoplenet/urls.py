@@ -1,7 +1,7 @@
 from django.conf.urls.defaults import *
 from django.conf import settings
 from django.http import HttpResponseRedirect
-from djangopeople import views, api
+from djangopeople import views, api, clustering
 from djangopeople.models import DjangoPerson
 from tagging.views import tagged_object_list
 import os
@@ -63,4 +63,6 @@ urlpatterns = patterns('',
     (r'^([a-z0-9]{3,})/finding/$', views.edit_finding),
     (r'^([a-z0-9]{3,})/upload/$', views.upload_profile_photo),
     (r'^([a-z0-9]{3,})/upload/done/$', views.upload_done),
+    
+    (r'^clusters/(\-?\d+\.?\d*)/(\-?\d+\.?\d*)/(\-?\d+\.?\d*)/(\-?\d+\.?\d*)/(\d+)/$', clustering.as_json),
 )

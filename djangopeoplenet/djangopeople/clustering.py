@@ -1,7 +1,8 @@
 
 from clusterlizard.clusterer import Clusterer
-
+from django.http import HttpResponse
 from djangopeople.models import *
+import simplejson
 
 def input_generator():
     """
@@ -33,6 +34,21 @@ def progress(done, left, took, zoom, eta):
     You can also pass in an optional progress callback.
     """
     print "Iter %s (%s clusters) [%.3f secs] [zoom: %s] [ETA %s]" % (done, left, took, zoom, eta)
+    
+
+def as_json(request, x1, y1, x2, y2, z):
+    """
+    View that returns clusters for the given zoom level as JSON.
+    """
+    if x1 > x2:
+        x1, x2 = x2, x1
+    if y1 > y2:
+        y1, y2 = y2, y1
+    points = []
+    for cluster in ClusteredPoint.objects.filter(latitude__gt=y1, latitude__lt=y2, longitude__gt=x1, longitude__lt=x2, zoom=z):
+        points.append((cluster.longitude, cluster.latitude, cluster.number))
+    return HttpResponse(simplejson.dumps(points))
+    
 
 
 def run():
