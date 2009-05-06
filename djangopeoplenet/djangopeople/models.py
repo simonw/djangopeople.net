@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.conf import settings
 from machinetags.models import MachineTaggedItem, add_machinetag
-import tagging
 from django.contrib.contenttypes import generic
 from lib.geopy import distance
 from django.utils.safestring import mark_safe
@@ -116,8 +115,6 @@ class Region(models.Model):
     name = models.CharField(max_length=50)
     country = models.ForeignKey(Country)
     flag = models.CharField(max_length=100, blank=True)
-    
-#    geoname_id = models.IntegerField()
     bbox_west = models.FloatField()
     bbox_north = models.FloatField()
     bbox_east = models.FloatField()
@@ -236,10 +233,10 @@ class DjangoPerson(models.Model):
             namespace = 'privacy', predicate='irctrack', value='private'
         ).count()
 
-tagging.register(DjangoPerson,
-    tag_descriptor_attr = 'skilltags',
-    tagged_item_manager_attr = 'skilltagged'
-)
+#tagging.register(DjangoPerson,
+#    tag_descriptor_attr = 'skilltags',
+#    tagged_item_manager_attr = 'skilltagged'
+#)
 
 class PortfolioSite(models.Model):
     title = models.CharField(max_length=100)

@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 import datetime
 
 class UserOpenID(models.Model):
-    user = models.ForeignKey(User, raw_id_admin=True)
+    user = models.ForeignKey(User)
     openid = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField()
     def __unicode__(self):

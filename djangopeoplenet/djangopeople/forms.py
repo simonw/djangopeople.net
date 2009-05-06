@@ -4,7 +4,7 @@ from django.db.models import ObjectDoesNotExist
 from models import DjangoPerson, Country, Region, User, RESERVED_USERNAMES
 from groupedselect import GroupedChoiceField
 from constants import SERVICES, IMPROVIDERS
-from tagging.forms import TagField
+#from tagging.forms import TagField
 
 def region_choices():
     # For use with GroupedChoiceField
@@ -127,7 +127,7 @@ class SignupForm(forms.Form):
         ), required=False #, widget = forms.RadioSelect, initial=''
     )
     
-    skilltags = TagField(required=False)
+    #skilltags = TagField(required=False)
     
     # Upload a photo is a separate page, because if validation fails we 
     # don't want to tell them to upload it all over again
@@ -195,8 +195,8 @@ class SignupForm(forms.Form):
 class PhotoUploadForm(forms.Form):
     photo = forms.ImageField()
 
-class SkillsForm(forms.Form):
-    skills = TagField(label='Change skills')
+#class SkillsForm(forms.Form):
+#    skills = TagField(label='Change skills')
 
 class BioForm(forms.Form):
     bio = forms.CharField(widget=forms.Textarea, required=False)

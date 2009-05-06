@@ -381,9 +381,9 @@ def profile(request, username):
         'person': person,
         'api_key': settings.GOOGLE_MAPS_API_KEY,
         'is_owner': request.user.username == username,
-        'skills_form': SkillsForm(initial={
-            'skills': edit_string_for_tags(person.skilltags)
-        }),
+#        'skills_form': SkillsForm(initial={
+#            'skills': edit_string_for_tags(person.skilltags)
+#        }),
         'mtags': mtags,
         'ims': ims,
         'services': services,
@@ -482,17 +482,17 @@ def edit_account(request, username):
         'user': person.user,
     })
 
-@must_be_owner
-def edit_skills(request, username):
-    person = get_object_or_404(DjangoPerson, user__username = username)
-    if not request.POST.get('skills'):
-        return render(request, 'edit_skills.html', {
-            'form': SkillsForm(initial={
-                'skills': edit_string_for_tags(person.skilltags)
-            }),
-        })
-    person.skilltags = request.POST.get('skills', '')
-    return HttpResponseRedirect('/%s/' % username)
+#@must_be_owner
+#def edit_skills(request, username):
+#    person = get_object_or_404(DjangoPerson, user__username = username)
+#    if not request.POST.get('skills'):
+#        return render(request, 'edit_skills.html', {
+#            'form': SkillsForm(initial={
+#                'skills': edit_string_for_tags(person.skilltags)
+#            }),
+#        })
+#    person.skilltags = request.POST.get('skills', '')
+#    return HttpResponseRedirect('/%s/' % username)
 
 @must_be_owner
 def edit_password(request, username):
@@ -659,49 +659,50 @@ def irc_active(request):
 from django.http import Http404
 from django.utils.translation import ugettext as _
 from django.views.generic.list_detail import object_list
-from tagging.models import Tag, TaggedItem
-from tagging.utils import get_tag
-def tagged_object_list(request, model=None, tag=None, related_tags=False,
-        related_tag_counts=True, extra_filter_args=None, **kwargs):
-    """
-    A thin wrapper around
-    ``django.views.generic.list_detail.object_list`` which creates a
-    ``QuerySet`` containing instances of the given model tagged with
-    the given tag.
-
-    In addition to the context variables set up by ``object_list``, a
-    ``tag`` context variable will contain the ``Tag`` instance for the
-    tag.
-
-    If ``related_tags`` is ``True``, a ``related_tags`` context variable
-    will contain tags related to the given tag for the given model.
-    Additionally, if ``related_tag_counts`` is ``True``, each related
-    tag will have a ``count`` attribute indicating the number of items
-    which have it in addition to the given tag.
-    """
-    if model is None:
-        try:
-            model = kwargs['model']
-        except KeyError:
-            raise AttributeError(_('tagged_object_list must be called with a model.'))
-
-    if tag is None:
-        try:
-            tag = kwargs['tag']
-        except KeyError:
-            raise AttributeError(_('tagged_object_list must be called with a tag.'))
-
-    tag_instance = get_tag(tag)
-    if tag_instance is None:
-        raise Http404(_('No Tag found matching "%s".') % tag)
-    queryset = TaggedItem.objects.get_by_model(model, tag_instance)
-    if extra_filter_args:
-        queryset = queryset.filter(**extra_filter_args)
-    if not kwargs.has_key('extra_context'):
-        kwargs['extra_context'] = {}
-    kwargs['extra_context']['tag'] = tag_instance
-    if related_tags:
-        kwargs['extra_context']['related_tags'] = \
-            Tag.objects.related_for_model(tag_instance, model,
-                                          counts=related_tag_counts)
-    return object_list(request, queryset, **kwargs)
+#from tagging.models import Tag, TaggedItem
+#from tagging.utils import get_tag
+#def tagged_object_list(request, model=None, tag=None, related_tags=False,
+#        related_tag_counts=True, extra_filter_args=None, **kwargs):
+#    """
+#    A thin wrapper around
+#    ``django.views.generic.list_detail.object_list`` which creates a
+#    ``QuerySet`` containing instances of the given model tagged with
+#    the given tag.
+#
+#    In addition to the context variables set up by ``object_list``, a
+#    ``tag`` context variable will contain the ``Tag`` instance for the
+#    tag.
+#
+#    If ``related_tags`` is ``True``, a ``related_tags`` context variable
+#    will contain tags related to the given tag for the given model.
+#    Additionally, if ``related_tag_counts`` is ``True``, each related
+#    tag will have a ``count`` attribute indicating the number of items
+#    which have it in addition to the given tag.
+#    """
+#    if model is None:
+#        try:
+#            model = kwargs['model']
+#        except KeyError:
+#            raise AttributeError(_('tagged_object_list must be called with a model.'))
+#
+#    if tag is None:
+#        try:
+#            tag = kwargs['tag']
+#        except KeyError:
+#            raise AttributeError(_('tagged_object_list must be called with a tag.'))
+#
+#    tag_instance = get_tag(tag)
+#    if tag_instance is None:
+#        raise Http404(_('No Tag found matching "%s".') % tag)
+#    queryset = TaggedItem.objects.get_by_model(model, tag_instance)
+#    if extra_filter_args:
+#        queryset = queryset.filter(**extra_filter_args)
+#    if not kwargs.has_key('extra_context'):
+#        kwargs['extra_context'] = {}
+#    kwargs['extra_context']['tag'] = tag_instance
+#    if related_tags:
+#        kwargs['extra_context']['related_tags'] = \
+#            Tag.objects.related_for_model(tag_instance, model,
+#                                          counts=related_tag_counts)
+#    return object_list(request, queryset, **kwargs)
+#
