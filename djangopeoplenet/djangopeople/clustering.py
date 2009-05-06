@@ -1,7 +1,9 @@
 
 from clusterlizard.clusterer import Clusterer
+
 from django.http import HttpResponse
 from djangopeople.models import *
+from django.db.models import Q
 
 import simplejson
 import math
@@ -55,17 +57,21 @@ def progress(done, left, took, zoom, eta):
     print "Iter %s (%s clusters) [%.3f secs] [zoom: %s] [ETA %s]" % (done, left, took, zoom, eta)
     
 
-def as_json(request, x1, y1, x2, y2, z):
+def as_json(request, x2, y1, x1, y2, z):
     """
     View that returns clusters for the given zoom level as JSON.
     """
     x1, y1, x2, y2 = map(float, (x1, y1, x2, y2))
-    if x1 > x2:
-        x1, x2 = x2, x1
     if y1 > y2:
         y1, y2 = y2, y1
+    
+    if x1 < x2: # View not crossing the date line
+        query = ClusteredPoint.objects.filter(latitude__gt=y1, latitude__lt=y2, longitude__gt=x1, longitude__lt=x2, zoom=z)
+    else: # View crossing the date line
+        query = ClusteredPoint.objects.filter(Q(longitude__lt=x1) | Q(longitude__gt=x2, latitude__gt=y1, latitude__lt=y2), zoom=z)
+    
     points = []
-    for cluster in ClusteredPoint.objects.filter(latitude__gt=y1, latitude__lt=y2, longitude__gt=x1, longitude__lt=x2, zoom=z):
+    for cluster in query:
         if cluster.djangoperson:
             points.append((cluster.longitude, cluster.latitude, cluster.number, cluster.djangoperson.get_absolute_url()))
         else:
