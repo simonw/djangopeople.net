@@ -5,6 +5,8 @@
 {% block js %}{% load thumbnail %}
 <script src="http://www.google.com/jsapi?key={{ api_key }}" type="text/javascript">
 </script>
+<script src="http://maps.google.com/maps?file=api&amp;v=2&amp;key={{ api_key }}" type="text/javascript"></script>
+
 <script type="text/javascript">
 google.load('maps', '2');
 </script>
@@ -43,12 +45,15 @@ window.onload = function() {
                 name, username, location_description, photo, iso_code, 
                 lat, lon
             ));
-        });                                   
-        GEvent.addListener(gmap, "zoomend", function() { 
-            loadClusters(gmap.getZoom());        
-        });
-        loadClusters(gmap.getZoom());
+        });                 
+    });                  
+    GEvent.addListener(gmap, "zoomend", function() { 
+        loadClusters(gmap.getZoom());        
     });
+    GEvent.addListener(gmap, "moveend", function() { 
+        loadClusters(gmap.getZoom());        
+    });
+    loadClusters(gmap.getZoom());
 };
 
 function loadClusters(zoom) {
@@ -59,17 +64,10 @@ function loadClusters(zoom) {
     zoomcsv = $.getJSON("/clusters/" + ne.lng() + "/" + ne.lat() + "/" + sw.lng() + "/" + sw.lat() + "/" + zoom + "/", function(points) {
         for (var i in points) {
             var point = points[i];
-            var latlng = GLatLng(point[1], point[0]);
+            var latlng = new GLatLng(point[1], point[0]);
             ClusterLizard.addCluster(gmap, latlng, point[2]);
         }
     });
-}
-
-function mercatorToLatLng(x, y) {
-    var lon = (x / 20037508.34) * 180;
-    var lat = (y / 20037508.34) * 180;
-    lat = 180/Math.PI * (2 * Math.atan(Math.exp(lat * Math.PI / 180)) - Math.PI / 2);
-    return new GLatLng(lat, lon);
 }
 
 </script>

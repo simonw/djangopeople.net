@@ -2,7 +2,24 @@
 from clusterlizard.clusterer import Clusterer
 from django.http import HttpResponse
 from djangopeople.models import *
+
 import simplejson
+import math
+
+
+def latlong_to_mercator(lat, long):
+    x = long * 20037508.34 / 180
+    y = math.log(math.tan((90 + lat) * math.pi / 360)) / (math.pi / 180)
+    y = y * 20037508.34 / 180;
+    return x, y
+
+
+def mercator_to_latlong(x, y):
+    long = (x / 20037508.34) * 180
+    lat = (y / 20037508.34) * 180
+    lat = 180/math.pi * (2 * math.atan(math.exp(lat * math.pi / 180)) - math.pi / 2)
+    return lat, long
+
 
 def input_generator():
     """
@@ -10,7 +27,8 @@ def input_generator():
     This function reads them from the DjangoPeople models.
     """
     for person in DjangoPerson.objects.all():
-        yield (person.longitude, person.latitude, person.id)
+        mx, my = latlong_to_mercator(person.latitude, person.longitude)
+        yield (mx, my, person.id)
     
     
 def save_clusters(clusters, zoom):
@@ -20,9 +38,10 @@ def save_clusters(clusters, zoom):
     the integer Google zoom level.
     """
     for cluster in clusters:
+        lat, long = mercator_to_latlong(*cluster.mean)
         ClusteredPoint.objects.create(
-            latitude = cluster.mean[0],
-            longitude = cluster.mean[1],
+            latitude = lat,
+            longitude = long,
             number = len(cluster),
             zoom = zoom,
             djangoperson_id = len(cluster) == 1 and list(cluster.points)[0][2] or None,

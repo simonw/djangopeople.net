@@ -1,18 +1,20 @@
 
-if (typeof(GObject) == "undefined") {
-	GObject = google.maps.Object;
-	GSize = google.maps.Size;
-	GPoint = google.maps.Point;
-	GIcon = google.maps.Icon;
-	GLatLng = google.maps.LatLng;
-}
+//if (typeof(GObject) == "undefined") {
+//	GObject = google.maps.Object;
+//	GSize = google.maps.Size;
+//	GPoint = google.maps.Point;
+//	GIcon = google.maps.Icon;
+//	GLatLng = google.maps.LatLng;
+//	GOverlay = google.maps.Overlay;
+//	G_MAP_MARKER_PANE = google.maps.MAP_MARKER_PANE;
+//}
 
 window.ClusterLizard = {
 
 	clusterIcon: function (size, w, h) {
 		var icon = new GIcon();
-		icon.image = "images/marker_" + size + ".png"
-		icon.shadowImage = "images/marker_" + size + "_shadow.png"
+		icon.image = "/static/img/marker_" + size + ".png"
+		icon.shadowImage = "/static/img/marker_" + size + "_shadow.png"
 		icon.iconSize = new GSize(w, h);
 		icon.shadowSize = icon.iconSize;
 		icon.iconAnchor = new GPoint(w/2, h/2);
@@ -31,9 +33,8 @@ window.ClusterLizard = {
 			icon = ClusterLizard.icon_tiny;
 		}
 		var marker = new ClusterLizard.ClusterMarker(latlng, icon, number);
-		//marker.bindInfoWindowHtml("Clusters: " + number);
-		console.log(marker);
 		map.addOverlay(marker);
+		console.log(marker);
 	},
 	
 	ClusterMarker: function (latlng, icon, number) {

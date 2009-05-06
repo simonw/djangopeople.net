@@ -56,10 +56,13 @@ class Clusterer(object):
             m_per_pixel = (40075016.68 / 2**zoom) / 256
             max_sep = m_per_pixel * self.separation
             # Keep going until clusters are far apart or not very numerous.
-            while d < max_sep and len(clusters) > 5:
+            
+            while d < max_sep and len(clusters) > 1:
                 s = time.time()
                 # Use closest-pair to find the closest two clusters
                 d, (x1, y1, c1), (x2, y2, c2) = closest_pair([(c.mean[0], c.mean[1], c) for c in clusters])
+                if d >= max_sep:
+                    break
                 # Merge them in the set
                 cn = c1.merge(c2)
                 clusters.discard(c1)
