@@ -263,3 +263,24 @@ class CountrySite(models.Model):
    
     class Admin:
         pass
+
+class ClusteredPoint(models.Model):
+    
+    """
+    Represents a clustered point on the map. Each cluster is at a lat/long,
+    is only for one zoom level, and has a number of people.
+    If it is only one person, it is also associated with a DjangoPerson ID.
+    """
+    
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    zoom = models.IntegerField()
+    number = models.IntegerField()
+    djangoperson = models.ForeignKey(DjangoPerson, blank=True, null=True)
+    
+    def __unicode__(self):
+        return "%s people at (%s,%s,z%s)" % (self.number, self.longitude, self.latitude, self.zoom)
+    
+    class Admin:
+        list_display = ("zoom", "latitude", "longitude", "number")
+        ordering = ("zoom",)
