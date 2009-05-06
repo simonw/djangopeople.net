@@ -404,5 +404,9 @@ class ClusteredPoint(models.Model):
     number = models.IntegerField()
     djangoperson = models.ForeignKey(DjangoPerson, blank=True, null=True)
     
+    def __unicode__(self):
+        return "%s people at (%s,%s,z%s)" % (self.number, self.longitude, self.latitude, self.zoom)
+    
     class Admin:
-        pass
+        list_display = ("zoom", "latitude", "longitude", "number")
+        ordering = ("zoom",)

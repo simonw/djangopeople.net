@@ -24,6 +24,7 @@ def save_clusters(clusters, zoom):
             longitude = cluster.mean[1],
             number = len(cluster),
             zoom = zoom,
+            djangoperson_id = len(cluster) == 1 and list(cluster.points)[0][2] or None,
         )
 
 
