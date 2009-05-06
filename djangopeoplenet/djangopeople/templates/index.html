@@ -56,7 +56,11 @@ window.onload = function() {
     loadClusters(gmap.getZoom());
 };
 
+var loading = false;
+
 function loadClusters(zoom) {
+    if (loading) { return };
+    loading = true;
     gmap.clearOverlays();
     bounds = gmap.getBounds();
     ne = bounds.getNorthEast();
@@ -67,6 +71,7 @@ function loadClusters(zoom) {
             var latlng = new GLatLng(point[1], point[0]);
             ClusterLizard.addCluster(gmap, latlng, point[2]);
         }
+        loading = false;
     });
 }
 

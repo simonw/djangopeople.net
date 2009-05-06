@@ -59,11 +59,13 @@ def as_json(request, x1, y1, x2, y2, z):
     """
     View that returns clusters for the given zoom level as JSON.
     """
+    x1, y1, x2, y2 = map(float, (x1, y1, x2, y2))
     if x1 > x2:
         x1, x2 = x2, x1
     if y1 > y2:
         y1, y2 = y2, y1
     points = []
+    print "%s < x < %s   %s < y < %s" % (x1, x2, y1, y2)
     for cluster in ClusteredPoint.objects.filter(latitude__gt=y1, latitude__lt=y2, longitude__gt=x1, longitude__lt=x2, zoom=z):
         points.append((cluster.longitude, cluster.latitude, cluster.number))
     return HttpResponse(simplejson.dumps(points))

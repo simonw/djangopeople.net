@@ -34,7 +34,6 @@ window.ClusterLizard = {
 		}
 		var marker = new ClusterLizard.ClusterMarker(latlng, icon, number);
 		map.addOverlay(marker);
-		console.log(marker);
 	},
 	
 	ClusterMarker: function (latlng, icon, number) {
