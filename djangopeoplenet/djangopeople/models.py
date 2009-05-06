@@ -388,3 +388,21 @@ def import_us_states():
             bbox_east = bbox_east,
             flag = flag
         )
+
+
+class ClusteredPoint(models.Model):
+    
+    """
+    Represents a clustered point on the map. Each cluster is at a lat/long,
+    is only for one zoom level, and has a number of people.
+    If it is only one person, it is also associated with a DjangoPerson ID.
+    """
+    
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    zoom = models.IntegerField()
+    number = models.IntegerField()
+    djangoperson = models.ForeignKey(DjangoPerson, blank=True, null=True)
+    
+    class Admin:
+        pass
