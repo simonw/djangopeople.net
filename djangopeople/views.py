@@ -36,10 +36,9 @@ def must_be_owner(view):
     return inner
 
 def index(request):
-    recent_people = list(DjangoPerson.objects.all().select_related().order_by('-id')[:100])
+    recent_people_limited = DjangoPerson.objects.all().select_related().order_by('-id')[:4]
     return render(request, 'index.html', {
-        'recent_people': recent_people,
-        'recent_people_limited': recent_people[:4],
+        'recent_people_limited': recent_people_limited,
         'total_people': DjangoPerson.objects.count(),
         'api_key': settings.GOOGLE_MAPS_API_KEY,
         'countries': Country.objects.top_countries(),

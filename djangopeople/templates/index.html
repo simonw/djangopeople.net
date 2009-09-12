@@ -89,9 +89,8 @@ var loading = false;
 {% endblock %}
 
 {% block content %}
-    <p class="mapnote">Showing {{ recent_people|length }} recent signups (out of {{ total_people }}){% if user.is_anonymous %} - if you're a Django developer, why not <a href="/signup/">add yourself</a> to the site?{% endif %}</p>
-        <h2 class="tagline">Discover users of the <a href="http://www.djangoproject.com/">Django Web framework</a> near you</h2>
-        <!-- <ul class="detailsList split">
+    <p class="mapnote">Showing {{ recent_people_limited|length }} recent signups (out of {{ total_people }}){% if user.is_anonymous %} - if you're a Django developer, why not <a href="/signup/">add yourself</a> to the site?{% endif %}</p>
+        <ul class="detailsList split">
             {% for person in recent_people_limited %}
             <li>
                 <img src="{% if person.photo %}{% thumbnail person.photo 40x40 crop %}{% else %}/static/img/person_small_blank.png{% endif %}" alt="{{ person }}" class="main">
@@ -100,11 +99,11 @@ var loading = false;
                 
             </li>
             {% endfor %}
-        </ul> -->
+        </ul>
         <ul class="detailsList split">
             {% for country in countries %}
             <li>
-                <a href="/{{ country.iso_code|lower }}/" class="nobg"><img src="/static/img/flags/{{ country.iso_code|lower }}.gif" alt="{{ country }}" title="{{ country }}"></a> <a href="/{{ country.iso_code|lower }}/"><strong>{{ country }}</strong></a> {{ country.peoplecount }} {% ifequal country.peoplecount 1 %}person{% else %}people{% endifequal %}
+                <a href="/{{ country.iso_code|lower }}/" class="nobg"><img src="/static/img/flags/{{ country.iso_code|lower }}.gif" alt="{{ country }}" title="{{ country }}"></a> <a href="/{{ country.iso_code|lower }}/"><strong>{{ country }}</strong></a> {{ country.num_people }} {% ifequal country.num_people 1 %}person{% else %}people{% endifequal %}
             </li>
             {% endfor %}
         </ul>

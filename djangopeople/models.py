@@ -26,27 +26,7 @@ RESERVED_USERNAMES = set((
 
 class CountryManager(models.Manager):
     def top_countries(self):
-        # Returns populated countries in order of population
-        from django.db import connection
-        cursor = connection.cursor()
-        cursor.execute("""
-            SELECT
-                djangopeople_country.id, count(*) AS peoplecount
-            FROM
-                djangopeople_djangoperson, djangopeople_country
-            WHERE
-                djangopeople_country.id = djangopeople_djangoperson.country_id
-            GROUP BY country_id
-            ORDER BY peoplecount DESC
-        """)
-        rows = cursor.fetchall()
-        found = self.in_bulk([r[0] for r in rows])
-        countries = []
-        for row in rows:
-            country = found[row[0]]
-            country.peoplecount = row[1]
-            countries.append(country)
-        return countries
+        return self.get_query_set().order_by('-num_people')
 
 class Country(models.Model):
     # Longest len('South Georgia and the South Sandwich Islands') = 44
@@ -78,28 +58,7 @@ class Country(models.Model):
     
     def top_regions(self):
         # Returns populated regions in order of population
-        from django.db import connection
-        cursor = connection.cursor()
-        cursor.execute("""
-            SELECT
-                djangopeople_region.id, count(*) AS peoplecount
-            FROM
-                djangopeople_djangoperson, djangopeople_region
-            WHERE
-                djangopeople_region.id = djangopeople_djangoperson.region_id
-            AND
-                djangopeople_region.country_id = %d
-            GROUP BY djangopeople_djangoperson.region_id
-            ORDER BY peoplecount DESC
-        """ % self.id)
-        rows = cursor.fetchall()
-        found = Region.objects.in_bulk([r[0] for r in rows])
-        regions = []
-        for row in rows:
-            region = found[row[0]]
-            region.peoplecount = row[1]
-            regions.append(region)
-        return regions
+        return self.region_set.order_by('-num_people')
     
     class Meta:
         ordering = ('name',)
