@@ -6,6 +6,7 @@ from django.contrib.contenttypes import generic
 from geopy import distance
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
+import tagging
 
 RESERVED_USERNAMES = set((
     # Trailing spaces are essential in these strings, or split() will be buggy
@@ -224,10 +225,10 @@ class DjangoPerson(models.Model):
             namespace = 'privacy', predicate='irctrack', value='private'
         ).count()
 
-#tagging.register(DjangoPerson,
-#    tag_descriptor_attr = 'skilltags',
-#    tagged_item_manager_attr = 'skilltagged'
-#)
+tagging.register(DjangoPerson,
+    tag_descriptor_attr = 'skilltags',
+    tagged_item_manager_attr = 'skilltagged'
+)
 
 class PortfolioSite(models.Model):
     title = models.CharField(max_length=100)

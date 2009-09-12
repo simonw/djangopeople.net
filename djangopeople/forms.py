@@ -4,7 +4,7 @@ from django.db.models import ObjectDoesNotExist
 from djangopeople.models import DjangoPerson, Country, Region, User, RESERVED_USERNAMES
 from djangopeople.groupedselect import GroupedChoiceField
 from djangopeople.constants import SERVICES, IMPROVIDERS
-#from tagging.forms import TagField
+from tagging.forms import TagField
 
 def region_choices():
     # For use with GroupedChoiceField
@@ -195,8 +195,8 @@ class SignupForm(forms.Form):
 class PhotoUploadForm(forms.Form):
     photo = forms.ImageField()
 
-#class SkillsForm(forms.Form):
-#    skills = TagField(label='Change skills')
+class SkillsForm(forms.Form):
+    skills = TagField(label='Change skills')
 
 class BioForm(forms.Form):
     bio = forms.CharField(widget=forms.Textarea, required=False)
