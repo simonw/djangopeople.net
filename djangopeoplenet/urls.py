@@ -57,7 +57,7 @@ urlpatterns = patterns('',
     
     (r'^([a-z0-9]{3,})/$', views.profile),
     (r'^([a-z0-9]{3,})/bio/$', views.edit_bio),
-#    (r'^([a-z0-9]{3,})/skills/$', views.edit_skills),
+    (r'^([a-z0-9]{3,})/skills/$', views.edit_skills),
     (r'^([a-z0-9]{3,})/password/$', views.edit_password),
     (r'^([a-z0-9]{3,})/account/$', views.edit_account),
     (r'^([a-z0-9]{3,})/portfolio/$', views.edit_portfolio),

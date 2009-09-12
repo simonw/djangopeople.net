@@ -24,7 +24,6 @@ $PYTHONPATH python /path/to/repo/djangopeoplenet/manage.py runserver
 TODO
 cleanup imports
 simplify QS reduce given QS.none
-make SkillsForm work (just bring in updated tagging?)
 
 
 404s:
