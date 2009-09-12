@@ -3,8 +3,8 @@
 import sys, os
 root = os.path.dirname(__file__)
 paths = (
-    os.path.join(root),
-    os.path.join(root, "djangopeople", "lib"),
+    os.path.join(root, '../lib'),
+    os.path.join(root, '..'),
 )
 for path in paths:
     if not path in sys.path:
