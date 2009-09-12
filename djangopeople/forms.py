@@ -1,5 +1,5 @@
-from django import newforms as forms
-from django.newforms.forms import BoundField
+from django import forms
+from django.forms.forms import BoundField
 from django.db.models import ObjectDoesNotExist
 from djangopeople.models import DjangoPerson, Country, Region, User, RESERVED_USERNAMES
 from djangopeople.groupedselect import GroupedChoiceField

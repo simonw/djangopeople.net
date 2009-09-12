@@ -9,8 +9,6 @@ class UserOpenID(models.Model):
     created_at = models.DateTimeField()
     def __unicode__(self):
         return "<User %s has OpenID %s>" % (self.user, self.openid)
-    class Admin:
-        pass
     class Meta:
         ordering = ('-created_at',)
 

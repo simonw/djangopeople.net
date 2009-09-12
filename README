@@ -27,3 +27,8 @@ simplify QS reduce given QS.none
 make SkillsForm work (just bring in updated tagging?)
 
 
+404s:
+	je.gif
+	aq.gif
+
+rewrite raw sql using aggregates, where possible.

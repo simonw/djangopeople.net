@@ -279,7 +279,7 @@ def upload_profile_photo(request, username):
         form = PhotoUploadForm(request.POST, request.FILES)
         if form.is_valid():
             # Figure out what type of image it is
-            image_content = request.FILES['photo']['content']
+            image_content = request.FILES['photo'].read()
             format = Image.open(StringIO(image_content)).format
             format = format.lower().replace('jpeg', 'jpg')
             filename = md5.new(image_content).hexdigest() + '.' + format

@@ -2,14 +2,14 @@ import re
 import math
 from django.template import Library, Node, Variable, VariableDoesNotExist, TemplateSyntaxError
 from django.conf import settings
-from sorl.thumbnail.base import VALID_OPTIONS
-from sorl.thumbnail.main import DjangoThumbnail
-from sorl.thumbnail.utils import get_thumbnail_setting
+from django.utils.encoding import force_unicode
+from sorl.thumbnail.main import DjangoThumbnail, get_thumbnail_setting
+from sorl.thumbnail.processors import dynamic_import, get_valid_options
+from sorl.thumbnail.utils import split_args
 
 register = Library()
 
 size_pat = re.compile(r'(\d+)x(\d+)$')
-quality_pat = re.compile(r'quality=([1-9]\d?|100)$')
 
 filesize_formats = ['k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
 filesize_long_formats = {
@@ -17,70 +17,99 @@ filesize_long_formats = {
     'E': 'exa', 'Z': 'zetta', 'Y': 'yotta'
 }
 
+try:
+    PROCESSORS = dynamic_import(get_thumbnail_setting('PROCESSORS'))
+    VALID_OPTIONS = get_valid_options(PROCESSORS)
+except:
+    if get_thumbnail_setting('DEBUG'):
+        raise
+    else:
+        PROCESSORS = []
+        VALID_OPTIONS = []
+TAG_SETTINGS = ['quality'] 
 
 class ThumbnailNode(Node):
     def __init__(self, source_var, size_var, opts=None,
                  context_name=None, **kwargs):
-        self.source_var = Variable(source_var)
-        m = size_pat.match(size_var)
-        if m:
-            self.requested_size = (int(m.group(1)), int(m.group(2)))
-        else:
-            self.size_var = Variable(size_var)
-            self.requested_size = None
+        self.source_var = source_var
+        self.size_var = size_var
         self.opts = opts
         self.context_name = context_name
         self.kwargs = kwargs
-    
+
     def render(self, context):
+        # Note that this isn't a global constant because we need to change the
+        # value for tests.
         DEBUG = get_thumbnail_setting('DEBUG')
-        # Resolve variables
         try:
+            # A file object will be allowed in DjangoThumbnail class
             relative_source = self.source_var.resolve(context)
-            size = self.requested_size or self.size_var.resolve(context)
         except VariableDoesNotExist:
             if DEBUG:
-                raise VariableDoesNotExist("Variable %s does not exist." %
-                                           self.source_var)
-            return ''
-        # Check size
+                raise VariableDoesNotExist("Variable '%s' does not exist." %
+                        self.source_var)
+            else:
+                relative_source = None
         try:
-            size = tuple([int(v) for v in size])
-        except (TypeError, ValueError):
-            size = ()
-        if len(size) != 2:
+            requested_size = self.size_var.resolve(context)
+        except VariableDoesNotExist:
             if DEBUG:
-                raise TemplateSyntaxError("Variable %s found but was not a"
-                    "valid size" % self.size_var)
-            return ''
-        # Get thumbnail class
-        try:
-            thumbnail = DjangoThumbnail(relative_source, size, opts=self.opts,
-                                        **self.kwargs)
-        except:
-            if DEBUG:
-                raise
-            return ''
+                raise TemplateSyntaxError("Size argument '%s' is not a"
+                        " valid size nor a valid variable." % self.size_var)
+            else:
+                requested_size = None
+        # Size variable can be either a tuple/list of two integers or a valid
+        # string, only the string is checked.
+        else:
+            if isinstance(requested_size, basestring):
+                m = size_pat.match(requested_size)
+                if m:
+                    requested_size = (int(m.group(1)), int(m.group(2)))
+                elif DEBUG:
+                    raise TemplateSyntaxError("Variable '%s' was resolved but "
+                            "'%s' is not a valid size." %
+                            (self.size_var, requested_size))
+                else:
+                    requested_size = None
+        if relative_source is None or requested_size is None:
+            thumbnail = ''
+        else:
+            try:
+                kwargs = {}
+                for key, value in self.kwargs.items():
+                    kwargs[key] = value.resolve(context)
+                opts = dict([(k, v and v.resolve(context))
+                             for k, v in self.opts.items()])
+                thumbnail = DjangoThumbnail(relative_source, requested_size,
+                                opts=opts, processors=PROCESSORS, **kwargs)
+            except:
+                if DEBUG:
+                    raise
+                else:
+                    thumbnail = ''
         # Return the thumbnail class, or put it on the context
         if self.context_name is None:
             return thumbnail
-        if thumbnail:
-            context[self.context_name] = thumbnail
+        # We need to get here so we don't have old values in the context
+        # variable.
+        context[self.context_name] = thumbnail
         return ''
 
 
 def thumbnail(parser, token):
     """
+    Creates a thumbnail of for an ImageField.
+
     To just output the absolute url to the thumbnail::
 
         {% thumbnail image 80x80 %}
 
     After the image path and dimensions, you can put any options::
 
-        {% thumbnail image 80x80 quality=95,crop %}
+        {% thumbnail image 80x80 quality=95 crop %}
 
     To put the DjangoThumbnail class on the context instead of just rendering
-    the absolute url, finish the tag with "as [context_var_name]"::
+    the absolute url, finish the tag with ``as [context_var_name]``::
 
         {% thumbnail image 80x80 as thumb %}
         {{ thumb.width }} x {{ thumb.height }}
@@ -88,50 +117,54 @@ def thumbnail(parser, token):
     args = token.split_contents()
     tag = args[0]
     # Check to see if we're setting to a context variable.
-    if len(args) in (5, 6) and args[-2] == 'as':
+    if len(args) > 4 and args[-2] == 'as':
         context_name = args[-1]
         args = args[:-2]
     else:
         context_name = None
 
-    if len(args) not in (3, 4):
+    if len(args) < 3:
         raise TemplateSyntaxError("Invalid syntax. Expected "
-            "'{%% %s source size [options] %%}' or "
-            "'{%% %s source size [options] as variable %%}'" % (tag, tag)) 
+            "'{%% %s source size [option1 option2 ...] %%}' or "
+            "'{%% %s source size [option1 option2 ...] as variable %%}'" %
+            (tag, tag))
 
     # Get the source image path and requested size.
-    source_var = args[1]
-    size_var = args[2]
+    source_var = parser.compile_filter(args[1])
+    # Since we changed to allow filters we have to make an exception for our syntax
+    m = size_pat.match(args[2])
+    if m:
+        args[2] = '"%s"' % args[2]
+    size_var = parser.compile_filter(args[2])
 
     # Get the options.
-    if len(args) == 4:
-        args_list = args[3].split(',')
-    else:
-        args_list = []
+    args_list = split_args(args[3:]).items()
 
     # Check the options.
-    opts = []
+    opts = {}
     kwargs = {} # key,values here override settings and defaults
-    for arg in args_list:
+
+    for arg, value in args_list:
+        value = value and parser.compile_filter(value)
+        if arg in TAG_SETTINGS and value is not None:
+            kwargs[str(arg)] = value
+            continue
         if arg in VALID_OPTIONS:
-            opts.append(arg)
+            opts[arg] = value
         else:
-            m = quality_pat.match(arg)
-            if not m:
-                raise TemplateSyntaxError(
-                    "'%s' tag received a bad argument: '%s'" % (tag, arg))
-            kwargs['quality'] = int(m.group(1))
+            raise TemplateSyntaxError("'%s' tag received a bad argument: "
+                                      "'%s'" % (tag, arg))
     return ThumbnailNode(source_var, size_var, opts=opts,
-                         context_name=context_name, **kwargs)
+            context_name=context_name, **kwargs)
 
 
 def filesize(bytes, format='auto1024'):
     """
     Returns the number of bytes in either the nearest unit or a specific unit
     (depending on the chosen format method).
-    
+
     Acceptable formats are:
-    
+
     auto1024, auto1000
       convert to the nearest unit, appending the abbreviated unit name to the
       string (e.g. '2 KiB' or '2 kB').
@@ -146,7 +179,7 @@ def filesize(bytes, format='auto1024'):
 
     The auto1024 and auto1000 formats return a string, appending the correct
     unit to the value. All other formats return the floating point value.
-    
+
     If an invalid format is specified, the bytes are returned unchanged.
     """
     format_len = len(format)
@@ -198,7 +231,7 @@ def filesize(bytes, format='auto1024'):
         else:
             unit = '%s%s' % (base == 1024 and unit.upper() or unit,
                              base == 1024 and 'iB' or 'B')
-    
+
         return '%s %s' % (bytes, unit)
 
     if bytes == 0:
@@ -207,7 +240,7 @@ def filesize(bytes, format='auto1024'):
     # Exact multiple of 1000
     if format_len == 2:
         return bytes / (1000.0**base)
-    # Exact multiple of 1024 
+    # Exact multiple of 1024
     elif format_len == 3:
         bytes = bytes >> (10*(base-1))
         return bytes / 1024.0

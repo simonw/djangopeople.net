@@ -107,9 +107,6 @@ class Country(models.Model):
     def __unicode__(self):
         return self.name
     
-    class Admin:
-        pass
-
 class Region(models.Model):
     code = models.CharField(max_length=20)
     name = models.CharField(max_length=50)
@@ -132,9 +129,6 @@ class Region(models.Model):
     class Meta:
         ordering = ('name',)
     
-    class Admin:
-        pass
-
 class DjangoPerson(models.Model):
     user = models.ForeignKey(User, unique=True)
     bio = models.TextField(blank=True)
@@ -213,9 +207,9 @@ class DjangoPerson(models.Model):
     def get_absolute_url(self):
         return '/%s/' % self.user.username
     
-    def save(self): # TODO: Put in transaction
+    def save(self, force_insert=False, force_update=False): # TODO: Put in transaction
         # Update country and region counters
-        super(DjangoPerson, self).save()
+        super(DjangoPerson, self).save(force_insert=False, force_update=False)
         self.country.num_people = self.country.djangoperson_set.count()
         self.country.save()
         if self.region:
@@ -224,9 +218,6 @@ class DjangoPerson(models.Model):
     
     class Meta:
         verbose_name_plural = 'Django people'
-
-    class Admin:
-        list_display = ('user', 'profile_views')
 
     def irc_tracking_allowed(self):
         return not self.machinetags.filter(
@@ -246,9 +237,6 @@ class PortfolioSite(models.Model):
     def __unicode__(self):
         return '%s <%s>' % (self.title, self.url)
     
-    class Admin:
-        pass
-
 class CountrySite(models.Model):
     "Community sites for various countries"
     title = models.CharField(max_length = 100)
@@ -258,26 +246,23 @@ class CountrySite(models.Model):
     def __unicode__(self):
         return '%s <%s>' % (self.title, self.url)
    
-    class Admin:
-        pass
-
-class ClusteredPoint(models.Model):
-    
-    """
-    Represents a clustered point on the map. Each cluster is at a lat/long,
-    is only for one zoom level, and has a number of people.
-    If it is only one person, it is also associated with a DjangoPerson ID.
-    """
-    
-    latitude = models.FloatField()
-    longitude = models.FloatField()
-    zoom = models.IntegerField()
-    number = models.IntegerField()
-    djangoperson = models.ForeignKey(DjangoPerson, blank=True, null=True)
-    
-    def __unicode__(self):
-        return "%s people at (%s,%s,z%s)" % (self.number, self.longitude, self.latitude, self.zoom)
-    
-    class Admin:
-        list_display = ("zoom", "latitude", "longitude", "number")
-        ordering = ("zoom",)
+#class ClusteredPoint(models.Model):
+#    
+#    """
+#    Represents a clustered point on the map. Each cluster is at a lat/long,
+#    is only for one zoom level, and has a number of people.
+#    If it is only one person, it is also associated with a DjangoPerson ID.
+#    """
+#    
+#    latitude = models.FloatField()
+#    longitude = models.FloatField()
+#    zoom = models.IntegerField()
+#    number = models.IntegerField()
+#    djangoperson = models.ForeignKey(DjangoPerson, blank=True, null=True)
+#    
+#    def __unicode__(self):
+#        return "%s people at (%s,%s,z%s)" % (self.number, self.longitude, self.latitude, self.zoom)
+#    
+#    class Admin:
+#        list_display = ("zoom", "latitude", "longitude", "number")
+#        ordering = ("zoom",)

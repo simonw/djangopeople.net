@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 r"""
 >>> import os
->>> from django import newforms as forms
+>>> from django import forms
 >>> from tagging.forms import TagField
 >>> from tagging import settings
 >>> from tagging.models import Tag, TaggedItem
