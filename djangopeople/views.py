@@ -4,8 +4,9 @@ from django.contrib import auth
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 from django.template.loader import render_to_string
-from djangopeople.models import DjangoPerson, Country, User, Region, PortfolioSite
+from djangopeople.models import DjangoPerson, Country, User, Region, PortfolioSite, Group
 from djangopeople import utils
+from django.db.models import Count
 from django_openidauth.models import associate_openid, UserOpenID
 from tagging.models import Tag
 #from tagging.views import tagged_object_list
@@ -49,6 +50,11 @@ def about(request):
         'total_people': DjangoPerson.objects.count(),
         'openid_users': User.objects.filter(useropenid__openid__startswith = 'http').distinct().count(),
         'countries': Country.objects.top_countries(),
+    })
+
+def groups(request):
+    return render(request, 'groups.html', {
+        'groups': Group.objects.annotate(num_members = Count('memberships')),
     })
 
 def recent(request):

@@ -205,7 +205,48 @@ class CountrySite(models.Model):
     
     def __unicode__(self):
         return '%s <%s>' % (self.title, self.url)
-   
+
+class Group(models.Model):
+    name = models.CharField(max_length = 255)
+    slug = models.SlugField(max_length = 50)
+    description = models.TextField(blank=True)
+    website = models.URLField(verify_exists=False, blank=True)
+    members = models.ManyToManyField(DjangoPerson,
+        through='Membership', related_name='groups'
+    )
+    is_open = models.BooleanField(default = False)
+
+    def __unicode__(self):
+        return self.name
+
+class Membership(models.Model):
+    user = models.ForeignKey(DjangoPerson, related_name = 'memberships')
+    group = models.ForeignKey(Group, related_name = 'memberships')
+    created_at = models.DateTimeField(auto_now_add = True)
+    is_admin = models.BooleanField(default = False)
+
+    def __unicode__(self):
+        if self.is_admin:
+            return u'%s is an admin for %s' % (self.user, self.group)
+        else:
+            return u'%s is a member of %s' % (self.user, self.group)
+
+class PendingMembership(models.Model):
+    user = models.ForeignKey(DjangoPerson, related_name = 'pending_memberships')
+    group = models.ForeignKey(Group, related_name = 'pending_memberships')
+    created_at = models.DateTimeField(auto_now_add = True)
+    pending_type = models.CharField(max_length = 10, choices = (
+        ('invitation', 'Invitation'),
+        ('request', 'Membership request')
+    ))
+
+    def __unicode__(self):
+        if self.pending_type == 'invitation':
+            return u'%s is invited to join %s' % (self.user, self.group)
+        else:
+            return u'%s has requested to join %s' % (self.user, self.group)
+
+
 #class ClusteredPoint(models.Model):
 #    
 #    """

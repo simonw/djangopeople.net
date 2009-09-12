@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Groups |{% endblock %}
+
+{% block nav_li_class_groups %} class="current"{% endblock %}
+
+{% block header%}
+<h1>Groups</h1>
+{% endblock %}
+
+{% block content %}{% load humanize %}
+<div class="about">
+<ul>
+    {% for group in groups %}
+    <li><a href="/groups/{{ group.slug }}/">{{ group }}</a></li>
+    {% endfor %}
+</ul>
+</div>
+{% endblock %}

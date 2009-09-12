@@ -19,6 +19,7 @@
             <li{% block nav_li_class_search %}{% endblock %}><a href="/search/">search</a></li>
             {% if not user.is_authenticated %}
             <!-- not logged in -->
+            <li{% block nav_li_class_groups %}{% endblock %}><a href="/groups/">groups</a></li>
             <li{% block nav_li_class_login %}{% endblock %}><a href="/login/" class="login">log in</a></li>
             <li{% block nav_li_class_signup %}{% endblock %}><a href="/signup/">sign up as a django person</a></li>
             {% else %}
@@ -27,6 +28,7 @@
             {% if not user.get_profile.photo %}<li><a href="/{{ user.username }}/upload/">upload photo</a></li>
             {% endif %}
             <li{% block nav_li_class_profile %}{% endblock %}><a href="/{{ user.username }}/">your profile</a></li>
+            <li{% block nav_li_class_your_groups %}{% endblock %}><a href="/{{ user.username }}/groups/">your groups</a></li>
             <li{% block nav_li_class_account %}{% endblock %}><a href="/{{ user.username }}/account/">your account</a></li>
             <li><a href="/logout/">log out</a></li>
             {% endif %}
