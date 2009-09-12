@@ -15,7 +15,7 @@ from machinetags.utils import tagdict
 from machinetags.models import MachineTaggedItem
 from djangopeople.forms import SkillsForm
 from djangopeople.forms import SignupForm, PhotoUploadForm, PortfolioForm, \
-    BioForm, LocationForm, FindingForm, AccountForm
+    BioForm, LocationForm, FindingForm, AccountForm, GroupForm
 from djangopeople.constants import MACHINETAGS_FROM_FIELDS, IMPROVIDERS_DICT, SERVICES_DICT
 from django.conf import settings
 import os, md5, datetime
@@ -55,6 +55,28 @@ def about(request):
 def groups(request):
     return render(request, 'groups.html', {
         'groups': Group.objects.annotate(num_members = Count('memberships')),
+    })
+
+def group(request, slug):
+    return render(request, 'group.html', {
+        'group': get_object_or_404(Group, slug = slug)
+    })
+
+def group_create(request):
+    form = GroupForm()
+    if request.method == 'POST':
+        form = GroupForm(request.POST)
+        if form.is_valid():
+            group = form.save(commit = False)
+            group.slug = utils.get_unique_value(Group, group.name.lower())
+            group.save()
+            group.memberships.create(
+                user = request.user.djangoperson_set.all()[0],
+                is_admin = True,
+            )
+            return HttpResponseRedirect(group.get_absolute_url())
+    return render(request, 'group_create.html', {
+        'form': form,
     })
 
 def recent(request):

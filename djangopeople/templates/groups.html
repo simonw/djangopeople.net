@@ -15,5 +15,9 @@
     <li><a href="/groups/{{ group.slug }}/">{{ group }}</a></li>
     {% endfor %}
 </ul>
+
+{% if user.is_authenticated %}
+<p><a href="/groups/create/">Create a new group</a></p>
+{% endif %}
 </div>
 {% endblock %}

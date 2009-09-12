@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Create a group |{% endblock %}
+
+{% block nav_li_class_groups %} class="current"{% endblock %}
+
+{% block header%}
+<h1>Create a group</h1>
+{% endblock %}
+
+{% block content %}{% load humanize %}
+
+<form action="{{ request.path }}" method="post">
+    {{ form.as_p }}
+    <p><input type="submit" value="Create the group"></p>
+</form>
+
+{% endblock %}

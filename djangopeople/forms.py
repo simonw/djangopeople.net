@@ -1,7 +1,7 @@
 from django import forms
 from django.forms.forms import BoundField
 from django.db.models import ObjectDoesNotExist
-from djangopeople.models import DjangoPerson, Country, Region, User, RESERVED_USERNAMES
+from djangopeople.models import DjangoPerson, Country, Region, User, RESERVED_USERNAMES, Group
 from djangopeople.groupedselect import GroupedChoiceField
 from djangopeople.constants import SERVICES, IMPROVIDERS
 from tagging.forms import TagField
@@ -230,6 +230,11 @@ class LocationForm(forms.Form):
         return self.cleaned_data['region']
     
     clean_location_description = not_in_the_atlantic
+
+class GroupForm(forms.ModelForm):
+    class Meta:
+        model = Group
+        fields = ('name', 'description', 'website', 'is_open')
 
 class FindingForm(forms.Form):
     def __init__(self, *args, **kwargs):

@@ -21,7 +21,7 @@ RESERVED_USERNAMES = set((
     'photos owner maps upload geocode geocoding login logout openid openids '
     'recover lost signup reports report flickr upcoming mashups recent irc '
     'group groups bulletin bulletins messages message newsfeed events company '
-    'companies active'
+    'companies active create'
 ).split())
 
 class CountryManager(models.Manager):
@@ -162,7 +162,7 @@ class DjangoPerson(models.Model):
             return self.location_description
     
     def __unicode__(self):
-        return unicode(self.user.get_full_name())
+        return unicode(self.user.get_full_name() or self.user.username)
     
     def get_absolute_url(self):
         return '/%s/' % self.user.username
@@ -214,10 +214,15 @@ class Group(models.Model):
     members = models.ManyToManyField(DjangoPerson,
         through='Membership', related_name='groups'
     )
-    is_open = models.BooleanField(default = False)
-
+    is_open = models.BooleanField(default = False, help_text = """
+    Anyone can join an open group - otherwise, you will need to approve new members.
+    """.strip())
+    
     def __unicode__(self):
         return self.name
+    
+    def get_absolute_url(self):
+        return u'/groups/%s/' % self.slug
 
 class Membership(models.Model):
     user = models.ForeignKey(DjangoPerson, related_name = 'memberships')
