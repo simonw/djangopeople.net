@@ -124,8 +124,25 @@ class DjangoPerson(models.Model):
             return '<none>'
      
     def get_nearest(self, num=5):
-        "Returns the nearest X people, but only within the same continent"
-        # TODO: Add caching
+        "Returns the nearest X people"
+        # TODO: use this shonky SQL query instead of the other shonky method
+        # From http://code.google.com/apis/maps/articles/phpsqlsearch_v3.html
+        sql = """
+            SELECT id, (
+                3959 * acos(
+                    cos(radians(%(latitude)s)) * 
+                    cos(radians(latitude)) * 
+                    cos(
+                        radians(longitude) - radians(%(longitude)s)
+                    )
+                    + sin(radians(%(latitude)s)) * 
+                    sin(radians(latitude))
+                )
+            ) AS distance
+            FROM djangopeople_djangoperson
+            HAVING distance < 100 ORDER BY distance LIMIT 0, %(num)s
+        """
+        # To search by kilometers instead of miles, replace 3959 with 6371.
         
         people = list(self.country.djangoperson_set.select_related().exclude(pk=self.id))
         if len(people) <= num:
