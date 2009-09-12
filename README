@@ -1,3 +1,8 @@
+Deployment TODO:
+	./manage.py migrate myapp 0001 --fake
+	./manage.py migrate myapp 0002
+
+
 This is an unmodified (except removal of secrets and API keys) dump of the
 code now running on djangopeople.net - the vast majority of which was
 developed between January and April 2008 by Simon Willison and Natalie Downe.
