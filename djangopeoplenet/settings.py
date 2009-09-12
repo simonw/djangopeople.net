@@ -109,6 +109,8 @@ INSTALLED_APPS = (
     'djangopeople',
     'machinetags',
     'sorl.thumbnail',
+    'tagging',
+    'south',
 )
 
 try:
