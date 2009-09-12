@@ -2,19 +2,20 @@
 Models and managers for generic tagging.
 """
 # Python 2.3 compatibility
-if not hasattr(__builtins__, 'set'):
+try:
+    set
+except NameError:
     from sets import Set as set
 
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.db import connection, models
-from django.db.models.query import QuerySet, parse_lookup
+from django.db.models.query import QuerySet
 from django.utils.translation import ugettext_lazy as _
 
 from tagging import settings
 from tagging.utils import calculate_cloud, get_tag_list, get_queryset_and_model, parse_tag_input
 from tagging.utils import LOGARITHMIC
-from tagging.validators import isTag
 
 qn = connection.ops.quote_name
 
@@ -74,25 +75,11 @@ class TagManager(models.Manager):
         return self.filter(items__content_type__pk=ctype.pk,
                            items__object_id=obj.pk)
 
-    def usage_for_model(self, model, counts=False, min_count=None, filters=None):
+    def _get_usage(self, model, counts=False, min_count=None, extra_joins=None, extra_criteria=None, params=None):
         """
-        Obtain a list of tags associated with instances of the given
-        Model class.
-
-        If ``counts`` is True, a ``count`` attribute will be added to
-        each tag, indicating how many times it has been used against
-        the Model class in question.
-
-        If ``min_count`` is given, only tags which have a ``count``
-        greater than or equal to ``min_count`` will be returned.
-        Passing a value for ``min_count`` implies ``counts=True``.
-
-        To limit the tags (and counts, if specified) returned to those
-        used by a subset of the Model's instances, pass a dictionary
-        of field lookups to be applied to the given Model as the
-        ``filters`` argument.
+        Perform the custom SQL query for ``usage_for_model`` and
+        ``usage_for_queryset``.
         """
-        if filters is None: filters = {}
         if min_count is not None: counts = True
 
         model_table = qn(model._meta.db_table)
@@ -119,15 +106,7 @@ class TagManager(models.Manager):
             'content_type_id': ContentType.objects.get_for_model(model).pk,
         }
 
-        extra_joins = ''
-        extra_criteria = ''
         min_count_sql = ''
-        params = []
-        if len(filters) > 0:
-            joins, where, params = parse_lookup(filters.items(), model._meta)
-            extra_joins = ' '.join(['%s %s AS %s ON %s' % (join_type, table, alias, condition)
-                                    for (alias, (table, join_type, condition)) in joins.items()])
-            extra_criteria = 'AND %s' % (' AND '.join(where))
         if min_count is not None:
             min_count_sql = 'HAVING COUNT(%s) >= %%s' % model_pk
             params.append(min_count)
@@ -141,6 +120,55 @@ class TagManager(models.Manager):
                 t.count = row[2]
             tags.append(t)
         return tags
+
+    def usage_for_model(self, model, counts=False, min_count=None, filters=None):
+        """
+        Obtain a list of tags associated with instances of the given
+        Model class.
+
+        If ``counts`` is True, a ``count`` attribute will be added to
+        each tag, indicating how many times it has been used against
+        the Model class in question.
+
+        If ``min_count`` is given, only tags which have a ``count``
+        greater than or equal to ``min_count`` will be returned.
+        Passing a value for ``min_count`` implies ``counts=True``.
+
+        To limit the tags (and counts, if specified) returned to those
+        used by a subset of the Model's instances, pass a dictionary
+        of field lookups to be applied to the given Model as the
+        ``filters`` argument.
+        """
+        if filters is None: filters = {}
+
+        queryset = model._default_manager.filter()
+        for f in filters.items():
+            queryset.query.add_filter(f)
+        usage = self.usage_for_queryset(queryset, counts, min_count)
+
+        return usage
+
+    def usage_for_queryset(self, queryset, counts=False, min_count=None):
+        """
+        Obtain a list of tags associated with instances of a model
+        contained in the given queryset.
+
+        If ``counts`` is True, a ``count`` attribute will be added to
+        each tag, indicating how many times it has been used against
+        the Model class in question.
+
+        If ``min_count`` is given, only tags which have a ``count``
+        greater than or equal to ``min_count`` will be returned.
+        Passing a value for ``min_count`` implies ``counts=True``.
+        """
+
+        extra_joins = ' '.join(queryset.query.get_from_clause()[0][1:])
+        where, params = queryset.query.where.as_sql()
+        if where:
+            extra_criteria = 'AND %s' % where
+        else:
+            extra_criteria = ''
+        return self._get_usage(queryset.model, counts, min_count, extra_joins, extra_criteria, params)
 
     def related_for_model(self, tags, model, counts=False, min_count=None):
         """
@@ -239,7 +267,7 @@ class TaggedItemManager(models.Manager):
           objects we're interested in, then use the ORM's ``__in``
           lookup to return a ``QuerySet``.
 
-          Once the queryset-refactor branch lands in trunk, this can be
+          Now that the queryset-refactor branch is in the trunk, this can be
           tidied up significantly.
     """
     def get_by_model(self, queryset_or_model, tags):
@@ -284,6 +312,10 @@ class TaggedItemManager(models.Manager):
         tags = get_tag_list(tags)
         tag_count = len(tags)
         queryset, model = get_queryset_and_model(queryset_or_model)
+
+        if not tag_count:
+            return model._default_manager.none()
+
         model_table = qn(model._meta.db_table)
         # This query selects the ids of all objects which have all the
         # given tags.
@@ -319,6 +351,10 @@ class TaggedItemManager(models.Manager):
         tags = get_tag_list(tags)
         tag_count = len(tags)
         queryset, model = get_queryset_and_model(queryset_or_model)
+
+        if not tag_count:
+            return model._default_manager.none()
+
         model_table = qn(model._meta.db_table)
         # This query selects the ids of all objects which have any of
         # the given tags.
@@ -383,17 +419,23 @@ class TaggedItemManager(models.Manager):
             'tag': qn(self.model._meta.get_field('tag').rel.to._meta.db_table),
             'content_type_id': content_type.pk,
             'related_content_type_id': related_content_type.pk,
-            'limit_offset': num is not None and connection.ops.limit_offset_sql(num) or '',
+            # Hardcoding this for now just to get tests working again - this
+            # should now be handled by the query object.
+            'limit_offset': num is not None and 'LIMIT %s' or '',
         }
 
         cursor = connection.cursor()
-        cursor.execute(query, [obj.pk])
+        params = [obj.pk]
+        if num is not None:
+            params.append(num)
+        cursor.execute(query, params)
         object_ids = [row[0] for row in cursor.fetchall()]
         if len(object_ids) > 0:
             # Use in_bulk here instead of an id__in lookup, because id__in would
             # clobber the ordering.
             object_dict = queryset.in_bulk(object_ids)
-            return [object_dict[object_id] for object_id in object_ids]
+            return [object_dict[object_id] for object_id in object_ids \
+                    if object_id in object_dict]
         else:
             return []
 
@@ -405,7 +447,7 @@ class Tag(models.Model):
     """
     A tag.
     """
-    name = models.CharField(_('name'), max_length=50, unique=True, db_index=True, validator_list=[isTag])
+    name = models.CharField(_('name'), max_length=50, unique=True, db_index=True)
 
     objects = TagManager()
 
@@ -413,9 +455,6 @@ class Tag(models.Model):
         ordering = ('name',)
         verbose_name = _('tag')
         verbose_name_plural = _('tags')
-
-    class Admin:
-        pass
 
     def __unicode__(self):
         return self.name
@@ -436,9 +475,6 @@ class TaggedItem(models.Model):
         unique_together = (('tag', 'content_type', 'object_id'),)
         verbose_name = _('tagged item')
         verbose_name_plural = _('tagged items')
-
-    class Admin:
-        pass
 
     def __unicode__(self):
         return u'%s [%s]' % (self.object, self.tag)

@@ -1,44 +1,26 @@
 import re
 import os
-from django.conf import settings
-
-re_thumbnail_file = re.compile(r'(?P<source_filename>.+)_(?P<x>\d+)x(?P<y>\d+)(?:_(?P<options>\w+))?_q(?P<quality>\d+).jpg$')
-
-DEFAULT_THUMBNAIL_SETTINGS = {
-    'DEBUG': False,
-    'BASEDIR': '',
-    'SUBDIR': '',
-    'PREFIX': '',
-    'QUALITY': 85,
-    'CONVERT': '/usr/bin/convert',
-    'WVPS': '/usr/bin/wvPS',
-}
 
 
-def get_thumbnail_setting(setting, override=None):
-    """
-    Get a thumbnail setting from Django settings module, falling back to the
-    default.
-    
-    If override is not None, it will be used instead of the setting.
-    """
-    if override is not None:
-        return override
-    if hasattr(settings, 'THUMBNAIL_%s' % setting):
-        return getattr(settings, 'THUMBNAIL_%s' % setting)
-    else:
-        return DEFAULT_THUMBNAIL_SETTINGS[setting]
+re_thumbnail_file = re.compile(r'(?P<source_filename>.+)_(?P<x>\d+)x(?P<y>\d+)(?:_(?P<options>\w+))?_q(?P<quality>\d+)(?:.[^.]+)?$')
+re_new_args = re.compile('(?<!quality)=')
 
 
 def all_thumbnails(path, recursive=True, prefix=None, subdir=None):
     """
     Return a dictionary referencing all files which match the thumbnail format.
-    
+
     Each key is a source image filename, relative to path.
     Each value is a list of dictionaries as explained in `thumbnails_for_file`.
     """
-    prefix = get_thumbnail_setting('PREFIX', prefix)
-    subdir = get_thumbnail_setting('SUBDIR', subdir)
+    # Fall back to using thumbnail settings. These are local imports so that
+    # there is no requirement of Django to use the utils module.
+    if prefix is None:
+        from sorl.thumbnail.main import get_thumbnail_setting
+        prefix = get_thumbnail_setting('PREFIX')
+    if subdir is None:
+        from sorl.thumbnail.main import get_thumbnail_setting
+        subdir = get_thumbnail_setting('SUBDIR')
     thumbnail_files = {}
     if not path.endswith('/'):
         path = '%s/' % path
@@ -67,7 +49,7 @@ def all_thumbnails(path, recursive=True, prefix=None, subdir=None):
                     source_filename[len(prefix):])
             d['options'] = d['options'] and d['options'].split('_') or []
             if subdir and rel_dir.endswith(subdir):
-                rel_dir = rel_dir[:-len(subdir)] 
+                rel_dir = rel_dir[:-len(subdir)]
             # Corner-case bug: if the filename didn't have an extension but did
             # have an underscore, the last underscore will get converted to a
             # '.'.
@@ -89,15 +71,25 @@ def thumbnails_for_file(relative_source_path, root=None, basedir=None,
 
     The following list explains each key of the dictionary:
 
-      `filename`  -- absolute thumbnail path 
+      `filename`  -- absolute thumbnail path
       `x` and `y` -- the size of the thumbnail
       `options`   -- list of options for this thumbnail
       `quality`   -- quality setting for this thumbnail
     """
+    # Fall back to using thumbnail settings. These are local imports so that
+    # there is no requirement of Django to use the utils module.
     if root is None:
+        from django.conf import settings
         root = settings.MEDIA_ROOT
-    basedir = get_thumbnail_setting('BASEDIR', basedir)
-    subdir = get_thumbnail_setting('SUBDIR', subdir)
+    if prefix is None:
+        from sorl.thumbnail.main import get_thumbnail_setting
+        prefix = get_thumbnail_setting('PREFIX')
+    if subdir is None:
+        from sorl.thumbnail.main import get_thumbnail_setting
+        subdir = get_thumbnail_setting('SUBDIR')
+    if basedir is None:
+        from sorl.thumbnail.main import get_thumbnail_setting
+        basedir = get_thumbnail_setting('BASEDIR')
     source_dir, filename = os.path.split(relative_source_path)
     thumbs_path = os.path.join(root, basedir, source_dir, subdir)
     if not os.path.isdir(thumbs_path):
@@ -118,15 +110,22 @@ def delete_thumbnails(relative_source_path, root=None, basedir=None,
 
 
 def _delete_using_thumbs_list(thumbs):
+    deleted = 0
     for thumb_dict in thumbs:
-        os.remove(thumb_dict['filename'])
-    return len(thumbs)
+        filename = thumb_dict['filename']
+        try:
+            os.remove(filename)
+        except:
+            pass
+        else:
+            deleted += 1
+    return deleted
 
 
 def delete_all_thumbnails(path, recursive=True):
     """
     Delete all files within a path which match the thumbnails pattern.
-    
+
     By default, matching files from all sub-directories are also removed. To
     only remove from the path directory, set recursive=False.
     """
@@ -134,3 +133,25 @@ def delete_all_thumbnails(path, recursive=True):
     for thumbs in all_thumbnails(path, recursive=recursive).values():
         total += _delete_using_thumbs_list(thumbs)
     return total
+
+
+def split_args(args):
+    """
+    Split a list of argument strings into a dictionary where each key is an
+    argument name.
+    
+    An argument looks like ``crop``, ``crop="some option"`` or ``crop=my_var``.
+    Arguments which provide no value get a value of ``None``.
+    """
+    if not args:
+        return {}
+    # Handle the old comma separated argument format.
+    if len(args) == 1 and not re_new_args.search(args[0]):
+        args = args[0].split(',')
+    # Separate out the key and value for each argument.
+    args_dict = {}
+    for arg in args:
+        split_arg = arg.split('=', 1)
+        value = len(split_arg) > 1 and split_arg[1] or None
+        args_dict[split_arg[0]] = value
+    return args_dict

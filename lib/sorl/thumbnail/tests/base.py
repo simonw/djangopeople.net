@@ -2,23 +2,33 @@ import unittest
 import os
 from PIL import Image
 from django.conf import settings
-from sorl.thumbnail.base import Thumbnail 
-from sorl.thumbnail.utils import DEFAULT_THUMBNAIL_SETTINGS
+from sorl.thumbnail.base import Thumbnail
 
 try:
     set
 except NameError:
     from sets import Set as set     # For Python 2.3
 
+def get_default_settings():
+    from sorl.thumbnail import defaults
+    def_settings = {}
+    for key in dir(defaults):
+        if key == key.upper() and key not in ['WVPS', 'CONVERT']:
+            def_settings[key] = getattr(defaults, key)
+    return def_settings
+
+
+DEFAULT_THUMBNAIL_SETTINGS = get_default_settings()
 RELATIVE_PIC_NAME = "sorl-thumbnail-test_source.jpg"
 PIC_NAME = os.path.join(settings.MEDIA_ROOT, RELATIVE_PIC_NAME)
 THUMB_NAME = os.path.join(settings.MEDIA_ROOT, "sorl-thumbnail-test_%02d.jpg")
 PIC_SIZE = (800, 600)
 
 
+
 class ChangeSettings:
     def __init__(self):
-        self.default_settings = DEFAULT_THUMBNAIL_SETTINGS.copy() 
+        self.default_settings = DEFAULT_THUMBNAIL_SETTINGS.copy()
 
     def change(self, override=None):
         if override is not None:
@@ -31,7 +41,7 @@ class ChangeSettings:
             if hasattr(settings, settings_s) or \
                default != DEFAULT_THUMBNAIL_SETTINGS[setting]:
                 setattr(settings, settings_s, default)
-    
+
     def revert(self):
         for setting in self.default_settings:
             settings_s = 'THUMBNAIL_%s' % setting
@@ -52,7 +62,7 @@ class BaseTest(unittest.TestCase):
         self.change_settings.change()
 
     def verify_thumbnail(self, expected_size, thumbnail=None,
-                         expected_filename=None):
+                         expected_filename=None, expected_mode=None):
         assert thumbnail is not None or expected_filename is not None, \
             'verify_thumbnail should be passed at least a thumbnail or an' \
             'expected filename.'
@@ -64,22 +74,33 @@ class BaseTest(unittest.TestCase):
         else:
             thumb_name = expected_filename
 
-        # Verify that the thumbnail file exists
-        self.assert_(os.path.isfile(thumb_name), 'Thumbnail file not found')
+        if isinstance(thumb_name, basestring):
+            # Verify that the thumbnail file exists
+            self.assert_(os.path.isfile(thumb_name),
+                         'Thumbnail file not found')
 
-        # Remember to delete the file
-        self.images_to_delete.add(thumb_name)
+            # Remember to delete the file
+            self.images_to_delete.add(thumb_name)
 
-        # If we got an expected_filename, check that it is right
-        if expected_filename is not None and thumbnail is not None:
-            self.assertEqual(thumbnail.dest, expected_filename)
+            # If we got an expected_filename, check that it is right
+            if expected_filename is not None and thumbnail is not None:
+                self.assertEqual(thumbnail.dest, expected_filename)
+
+        image = Image.open(thumb_name)
 
         # Verify the thumbnail has the expected dimensions
-        self.assertEqual(Image.open(thumb_name).size, expected_size)
+        self.assertEqual(image.size, expected_size)
+
+        if expected_mode is not None:
+            self.assertEqual(image.mode, expected_mode)
 
     def tearDown(self):
         # Remove all the files that have been created
         for image in self.images_to_delete:
-            os.remove(image)
+            try:
+                os.remove(image)
+            except:
+                pass
         # Change settings back to original
         self.change_settings.revert()
+

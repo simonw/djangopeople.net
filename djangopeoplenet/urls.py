@@ -1,4 +1,5 @@
 from django.conf.urls.defaults import *
+from django.contrib import admin
 from django.conf import settings
 from django.http import HttpResponseRedirect
 from djangopeople import views, api #, clustering
@@ -8,6 +9,8 @@ import os
 
 def redirect(url):
     return lambda res: HttpResponseRedirect(url)
+
+admin.autodiscover()
 
 urlpatterns = patterns('',
     (r'^$', views.index),
@@ -38,10 +41,9 @@ urlpatterns = patterns('',
     (r'^static/(?P<path>.*)$', 'django.views.static.serve', {
         'document_root': os.path.join(settings.OUR_ROOT, 'static')
     }),
-    (r'^admin/', include('django.contrib.admin.urls')),
-   
+    (r'^admin/(.*)', admin.site.root),
     (r'^api/irc_lookup/(.*?)/$', api.irc_lookup),
-    (r'^api/irc_spotted/(.*?)/$', api.irc_spotted), 
+    (r'^api/irc_spotted/(.*?)/$', api.irc_spotted),
     (r'^irc/active/$', views.irc_active),
     (r'^irc/(.*?)/$', api.irc_redirect),
     
