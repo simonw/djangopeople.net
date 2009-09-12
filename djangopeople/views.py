@@ -1,19 +1,21 @@
 from django.http import Http404, HttpResponse, HttpResponseRedirect, \
     HttpResponseForbidden
+from django.contrib import auth
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
 from django.template.loader import render_to_string
-from models import DjangoPerson, Country, User, Region, PortfolioSite
-import utils
+from djangopeople.models import DjangoPerson, Country, User, Region, PortfolioSite
+from djangopeople import utils
 from django_openidauth.models import associate_openid, UserOpenID
 from tagging.models import Tag
 from tagging.views import tagged_object_list
 from tagging.utils import calculate_cloud, edit_string_for_tags
 from machinetags.utils import tagdict
 from machinetags.models import MachineTaggedItem
-from forms import SignupForm, PhotoUploadForm, SkillsForm, PortfolioForm, \
+#from djangopeople.forms import SkillsForm
+from djangopeople.forms import SignupForm, PhotoUploadForm, PortfolioForm, \
     BioForm, LocationForm, FindingForm, AccountForm
-from constants import MACHINETAGS_FROM_FIELDS, IMPROVIDERS_DICT, SERVICES_DICT
+from djangopeople.constants import MACHINETAGS_FROM_FIELDS, IMPROVIDERS_DICT, SERVICES_DICT
 from django.conf import settings
 import os, md5, datetime
 from PIL import Image
@@ -56,7 +58,6 @@ def recent(request):
         'api_key': settings.GOOGLE_MAPS_API_KEY,
     })
 
-from django.contrib import auth
 def login(request):
     if request.method != 'POST':
         return render(request, 'login.html', {

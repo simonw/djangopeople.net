@@ -112,6 +112,6 @@ INSTALLED_APPS = (
 )
 
 try:
-    from local_settings import *
+    from djangopeople_local_settings import *
 except ImportError:
     pass

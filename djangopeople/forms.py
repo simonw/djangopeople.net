@@ -1,9 +1,9 @@
 from django import newforms as forms
 from django.newforms.forms import BoundField
 from django.db.models import ObjectDoesNotExist
-from models import DjangoPerson, Country, Region, User, RESERVED_USERNAMES
-from groupedselect import GroupedChoiceField
-from constants import SERVICES, IMPROVIDERS
+from djangopeople.models import DjangoPerson, Country, Region, User, RESERVED_USERNAMES
+from djangopeople.groupedselect import GroupedChoiceField
+from djangopeople.constants import SERVICES, IMPROVIDERS
 #from tagging.forms import TagField
 
 def region_choices():

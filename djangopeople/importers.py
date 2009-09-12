@@ -3,7 +3,7 @@ try:
 except ImportError:
     from elementtree import ElementTree as ET
 
-from models import Country, Region
+from djangopeople.models import Country, Region
 
 def import_countries(fp):
     et = ET.parse(fp)
