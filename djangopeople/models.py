@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from machinetags.models import MachineTaggedItem, add_machinetag
 from django.contrib.contenttypes import generic
-from lib.geopy import distance
+from geopy import distance
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 
