@@ -208,6 +208,7 @@ class CountrySite(models.Model):
 
 class Group(models.Model):
     name = models.CharField(max_length = 255)
+    slug = models.SlugField(max_length = 50)
     description = models.TextField(blank=True)
     website = models.URLField(verify_exists=False, blank=True)
     members = models.ManyToManyField(DjangoPerson,
