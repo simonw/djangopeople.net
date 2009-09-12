@@ -1,5 +1,6 @@
 from django.contrib import admin
-from djangopeople.models import Country, CountrySite, Region, DjangoPerson, PortfolioSite
+from djangopeople.models import Country, CountrySite, Region, DjangoPerson, \
+    PortfolioSite, Group, Membership, PendingMembership
 
 class CountryAdmin(admin.ModelAdmin):
     list_display = ('name',)
@@ -22,3 +23,6 @@ admin.site.register(CountrySite, CountrySiteAdmin)
 admin.site.register(Region, RegionAdmin)
 admin.site.register(DjangoPerson, DjangoPersonAdmin)
 admin.site.register(PortfolioSite, PortfolioSiteAdmin)
+admin.site.register(Membership)
+admin.site.register(Group)
+admin.site.register(PendingMembership)
